@@ -1,4 +1,5 @@
 # 🍋 Lemon Niri Dotfiles
+![Preview of my Lemon Niri Setup](preview.png)
 
 My custom Wayland desktop environment running on **Fedora 43**. This setup features a yellow "Citrus" aesthetic and a proportional window layout.
 
