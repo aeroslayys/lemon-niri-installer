@@ -16,76 +16,22 @@ Minimal. Bright. Functional.
 
 # 🚀 Installation
 
-## ✅ Recommended: Manual Installation
-
-Manual installation is strongly recommended so you:
-
-- Understand system changes  
-- Control backups  
-- Avoid unintended overwrites  
-- Learn your environment structure  
-
----
-
-# 📦 Manual Install Steps
-
-## 1️⃣ Install Core Dependencies
-
-Install the following packages:
-
-- `niri`
-- `alacritty`
-- `fastfetch`
-- `chafa`
-- `git`
-
-### Fedora
+## 📦 Clone Repository
 
 ```bash
-sudo dnf install niri alacritty fastfetch chafa git
-```
-
-### Arch
-
-```bash
-sudo pacman -S --needed niri alacritty fastfetch chafa git
+git clone https://github.com/aeroslayys/lemon-niri-installer
+cd lemon-niri-installer
 ```
 
 ---
 
-## 2️⃣ Install Noctalia (Status Bar)
-
-### Arch
-
-```bash
-yay -S noctalia-shell
-```
-
-### Fedora
-
-```bash
-sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
-sudo dnf install noctalia-shell
-```
-
----
-
-## 3️⃣ Clone Installer Repository
-
-```bash
-git clone https://github.com/aeroslayys/lemon-niri-installer ~/lemon-niri-installer
-cd ~/lemon-niri-installer
-```
-
----
-
-## 4️⃣ Run Installer
+## ▶ Run Installer
 
 ```bash
 bash install.sh
 ```
 
-Or preview changes:
+Preview changes safely:
 
 ```bash
 bash install.sh --dry-run
@@ -93,18 +39,10 @@ bash install.sh --dry-run
 
 ---
 
-# ⚠️ Interactive Auto Installer
+# ⚠️ Supported Distributions
 
-✔ Supports:
-- Fedora  
-- Arch  
-
-✔ Fully interactive  
-✔ Safe backups  
-✔ `--dry-run` support  
-✔ Handles AUR + COPR automatically  
-✔ Optional wallpaper installation (~1GB)  
-✔ Optional Gruvbox theme injection  
+- Fedora
+- Arch Linux
 
 ---
 
@@ -114,20 +52,36 @@ bash install.sh --dry-run
 
 - Detects system using `/etc/os-release`
 - Fedora → `dnf`
-- Arch → `pacman` + `yay`
+- Arch → `pacman`
 
 ---
 
 ## ✔ Pre-Flight Checks
 
 ### Fedora
-- Installs `git`
+- Ensures `git` is installed
 - Installs `dnf-plugins-core` if missing
 
 ### Arch
-- Installs `git`
-- Installs `base-devel`
-- Installs `yay` automatically if missing
+- Ensures `git`
+- Ensures `base-devel`
+- Installs AUR helper automatically if missing
+
+---
+
+## 🏔 Arch Linux & AUR Helpers
+
+The installer is designed to be **AUR-helper agnostic**.
+
+It will prioritize existing helpers such as:
+
+- `yay`
+- `paru`
+- `aurutils`
+
+If none of these are detected, the installer will automatically install `yay` to complete the environment setup.
+
+This ensures a smooth experience while respecting existing Arch workflows.
 
 ---
 
@@ -138,8 +92,8 @@ bash install.sh --dry-run
 - Arch → Installs `niri-git` from AUR
 
 ### Noctalia
-- Fedora → Enables Terra repo automatically
-- Arch → Installs via `yay`
+- Fedora → Enables Terra repository automatically
+- Arch → Installs via detected AUR helper
 
 ### GTK4
 - Automatically installs if missing
@@ -151,12 +105,13 @@ bash install.sh --dry-run
 You can choose to install:
 
 - Niri (Window Manager)
-- Noctalia (Status Bar)
+- Noctalia (Status Bar / Shell)
 - Fuzzel (App Launcher)
 - Alacritty (Terminal)
 - Fastfetch & Chafa
 - Zsh
-- Wallpaper Bank
+- Wallpaper Bank (~1GB)
+- Gruvbox Theme Injection
 
 Nothing installs without confirmation.
 
@@ -178,7 +133,7 @@ Nothing installs without confirmation.
 
 ## ✔ VirtualBox Detection
 
-If running in VirtualBox, the installer recommends:
+If running inside VirtualBox, the installer recommends:
 
 ### Fedora
 ```bash
