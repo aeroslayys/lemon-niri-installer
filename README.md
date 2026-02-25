@@ -1,8 +1,8 @@
-# 🍋 Lemon Niri Dotfiles
+# 🍋 Lemon Niri Installer
 
 ![Preview of my Lemon Niri Setup](preview.png)
 
-A citrus-themed Wayland desktop built around **Niri** with proportional tiling and bold yellow accents.
+A citrus-themed Wayland desktop installer built around **Niri** with proportional tiling and bold yellow accents.
 
 Minimal. Bright. Functional.
 
@@ -70,51 +70,30 @@ sudo dnf install noctalia-shell
 
 ---
 
-## 3️⃣ Clone Dotfiles
+## 3️⃣ Clone Installer Repository
 
 ```bash
-git clone https://github.com/aeroslayys/niri-dotfiles ~/niri-dotfiles
+git clone https://github.com/aeroslayys/lemon-niri-installer ~/lemon-niri-installer
+cd ~/lemon-niri-installer
 ```
 
 ---
 
-## 4️⃣ Backup Existing Configs
+## 4️⃣ Run Installer
 
 ```bash
-mkdir -p ~/dotfiles_backup
-mv ~/.config/niri ~/dotfiles_backup/ 2>/dev/null
-mv ~/.config/alacritty ~/dotfiles_backup/ 2>/dev/null
-mv ~/.config/fuzzel ~/dotfiles_backup/ 2>/dev/null
+bash install.sh
 ```
 
----
-
-## 5️⃣ Symlink Configurations
+Or preview changes:
 
 ```bash
-mkdir -p ~/.config
-ln -sf ~/niri-dotfiles/niri ~/.config/
-ln -sf ~/niri-dotfiles/alacritty ~/.config/
-ln -sf ~/niri-dotfiles/fuzzel ~/.config/ 2>/dev/null
+bash install.sh --dry-run
 ```
-
----
-
-## 6️⃣ Optional: Zsh Lemon Config
-
-```bash
-cat ~/niri-dotfiles/zshrc >> ~/.zshrc
-```
-
-- Appends configuration
-- Does NOT overwrite existing `.zshrc`
-- Safe to re-run
 
 ---
 
 # ⚠️ Interactive Auto Installer
-
-An interactive installer script is included.
 
 ✔ Supports:
 - Fedora  
@@ -124,36 +103,8 @@ An interactive installer script is included.
 ✔ Safe backups  
 ✔ `--dry-run` support  
 ✔ Handles AUR + COPR automatically  
-
----
-
-# 🧪 Dry Run Mode
-
-Preview everything without making changes:
-
-```bash
-bash install.sh --dry-run
-```
-
-Or:
-
-```bash
-bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw) --dry-run
-```
-
----
-
-# ▶ Execute Installer
-
-```bash
-bash install.sh
-```
-
-Or:
-
-```bash
-bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw)
-```
+✔ Optional wallpaper installation (~1GB)  
+✔ Optional Gruvbox theme injection  
 
 ---
 
@@ -205,47 +156,16 @@ You can choose to install:
 - Alacritty (Terminal)
 - Fastfetch & Chafa
 - Zsh
+- Wallpaper Bank
+- Gruvbox Theme Injection
 
 Nothing installs without confirmation.
 
 ---
 
-## ✔ Wallpaper Bank (Optional ~1GB)
-
-Optionally clones:
-
-```
-Wallpaper-Bank
-```
-
-Into:
-
-```
-~/Pictures/Wallpaper-Bank
-```
-
-Uses shallow clone (`--depth 1`).
-
----
-
-## ✔ Automatic Gruvbox Theme (Optional)
-
-If selected, writes a Gruvbox profile to:
-
-```
-~/.config/noctalia/colors.json
-```
-
-Includes:
-- Proper primary/secondary accents
-- Surface contrast
-- Lemon-friendly palette
-
----
-
 ## ✔ Safe Dotfile Handling
 
-- Clones repo if missing
+- Clones dotfiles repository if missing
 - Creates timestamped backup:
 
 ```
@@ -254,14 +174,6 @@ Includes:
 
 - Backs up existing configs
 - Creates clean symlinks
-
----
-
-## ✔ Zsh Integration
-
-- Appends lemon config only if not already present
-- Never overwrites `.zshrc`
-- Safe for repeated runs
 
 ---
 
@@ -310,6 +222,16 @@ sudo pacman -S virtualbox-guest-utils
 A high-contrast, proportional Wayland workflow with citrus identity.
 
 Designed for clarity, speed, and simplicity.
+
+---
+
+# 🤝 Credits & Appreciations
+
+- **[Niri](https://github.com/niri-wm/niri)** — The scrollable Wayland compositor that makes this all possible.  
+- **[Noctalia](https://noctalia.dev/)** — For the beautiful, customizable bar and shell.  
+- **[JaKooLit](https://github.com/JaKooLit)** — Inspiration for the interactive installation flow and the Wallpaper-Bank.  
+- **[Bibata Cursor](https://github.com/ful1e5/bibata)** — For the sleek Modern Ice cursor theme.  
+- **The Fedora and Arch Communities** — For maintaining the repositories and COPR/AUR infrastructure.
 
 ---
 
