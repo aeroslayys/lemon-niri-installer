@@ -39,7 +39,7 @@ else
     OS="unknown"
 fi
 
-# --- 2. Pre-flight Checks ---
+# --- 2. Pre-flight Checks & AUR Helper Detection ---
 echo -e "${CYAN}Performing pre-flight checks...${NC}"
 case $OS in
     fedora)
@@ -47,13 +47,23 @@ case $OS in
         ;;
     arch)
         run_cmd sudo pacman -S --needed --noconfirm git base-devel curl
-        if ! command -v yay &> /dev/null; then
-            echo -e "${CYAN}Installing yay (AUR helper)...${NC}"
+        
+        # Smart AUR Helper Detection
+        if command -v yay &> /dev/null; then
+            AUR_HELPER="yay"
+        elif command -v paru &> /dev/null; then
+            AUR_HELPER="paru"
+        elif command -v aur &> /dev/null; then
+            AUR_HELPER="aur sync -si"
+        else
+            echo -e "${CYAN}No AUR helper found. Installing yay as fallback...${NC}"
             run_cmd git clone https://aur.archlinux.org/yay.git /tmp/yay
             if [ "$DRY_RUN" = false ]; then
                 cd /tmp/yay && makepkg -si --noconfirm && cd - && rm -rf /tmp/yay
             fi
+            AUR_HELPER="yay"
         fi
+        echo -e "${GREEN}Using AUR Helper: $AUR_HELPER${NC}"
         ;;
 esac
 
@@ -63,7 +73,7 @@ esac
 if confirm "Niri (Window Manager)"; then
     case $OS in
         fedora) run_cmd sudo dnf copr enable -y yalter/niri-git && run_cmd sudo dnf install -y niri ;;
-        arch)   run_cmd yay -S --needed --noconfirm niri-git ;;
+        arch)   run_cmd $AUR_HELPER --needed --noconfirm niri-git ;;
     esac
 fi
 
@@ -74,7 +84,7 @@ if confirm "Noctalia (Status Bar/Shell)"; then
             run_cmd sudo dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
             run_cmd sudo dnf install -y noctalia-shell 
             ;;
-        arch) run_cmd yay -S --needed --noconfirm noctalia-shell ;;
+        arch) run_cmd $AUR_HELPER --needed --noconfirm noctalia-shell ;;
     esac
 fi
 
@@ -82,7 +92,7 @@ fi
 if confirm "Bibata Modern Ice Cursor"; then
     case $OS in
         fedora) run_cmd sudo dnf install -y bibata-cursor-themes ;;
-        arch)   run_cmd yay -S --needed --noconfirm bibata-cursor-theme-bin ;;
+        arch)   run_cmd $AUR_HELPER --needed --noconfirm bibata-cursor-theme-bin ;;
     esac
 fi
 
@@ -112,8 +122,8 @@ if confirm "Zsh + Oh My Zsh (and set as default shell)"; then
     fi
 
     ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-    run_cmd git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
-    run_cmd git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
+    [ ! -d "${ZSH_CUSTOM}/plugins/zsh-autosuggestions" ] && run_cmd git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
+    [ ! -d "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting" ] && run_cmd git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
     
     echo -e "${CYAN}Changing default shell to Zsh...${NC}"
     run_cmd sudo chsh -s $(which zsh) $USER
@@ -122,7 +132,7 @@ fi
 # --- 5. Assets & Wallpapers ---
 if confirm "Download Wallpaper-Bank (~1GB)"; then
     run_cmd mkdir -p "$HOME/Pictures"
-    run_cmd git clone --depth 1 "$WALLPAPER_URL" "$WALLPAPER_DIR"
+    [ ! -d "$WALLPAPER_DIR" ] && run_cmd git clone --depth 1 "$WALLPAPER_URL" "$WALLPAPER_DIR"
 fi
 
 # --- 6. Repository & Symlinking ---
@@ -134,13 +144,11 @@ fi
 if confirm "Apply Dotfile Symlinks (Niri, Alacritty, Fuzzel, Zshrc)"; then
     [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-    # Link Zshrc
     if [ -f "$DOTFILES_DIR/zshrc" ]; then
-        [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak" 2>/dev/null
+        [ "$DRY_RUN" = false ] && [ -f "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak" 2>/dev/null
         run_cmd ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
     fi
 
-    # Link Config Folders
     for cfg in "niri" "alacritty" "fuzzel" "noctalia"; do
         if [ -d "$DOTFILES_DIR/$cfg" ]; then
             run_cmd ln -sf "$DOTFILES_DIR/$cfg" "$HOME/.config/"
