@@ -84,13 +84,17 @@ cd ~/lemon-niri-installer
 ## 4️⃣ Run Installer
 
 ```bash
-bash install.sh
+chmod +x install.sh
+./install.sh
+
 ```
 
 Preview changes safely:
 
 ```bash
-bash install.sh --dry-run
+chmod +x install.sh
+./install.sh --dry-run 
+
 ```
 
 ---
