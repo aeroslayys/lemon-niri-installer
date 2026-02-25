@@ -2,7 +2,7 @@
 
 ![Preview of my Lemon Niri Setup](preview.png)
 
-My custom Wayland desktop environment featuring a bold yellow **"Citrus"** aesthetic and proportional tiling powered by **Niri**.
+My custom Wayland desktop environment featuring a bold yellow **"Citrus"** aesthetic and proportional tiling powered by Niri.
 
 Minimal. Bright. Functional.
 
@@ -19,36 +19,47 @@ Minimal. Bright. Functional.
 
 ## ✅ Recommended: Manual Installation
 
-Manual installation is strongly recommended so you:
+Manual installation is **strongly recommended** so you:
 
-- Understand every change being made
-- Control your backups
-- Avoid unexpected package conflicts
-- Learn how your environment is structured
+- Understand every change being made  
+- Control your backups  
+- Avoid unexpected package conflicts  
+- Learn how your environment is structured  
 
 ---
 
-### 1️⃣ Install Dependencies
+### 1️⃣ Install Core Dependencies
 
-Install the core packages using your distro’s package manager.
+Install what you need using your distro’s package manager.
 
-**Arch Linux**
-```bash
-sudo pacman -S --needed niri waybar foot mako fuzzel swww git
-```
+**Core:**
+- `niri`
+- `alacritty`
+- `fastfetch`
+- `chafa`
+- `zsh`
+- JetBrains Mono Nerd Font
+- `git`
+
+Example:
 
 **Fedora**
 ```bash
-sudo dnf install niri waybar foot mako fuzzel swww git
+sudo dnf install niri alacritty fastfetch chafa zsh jetbrains-mono-fonts-all git
+```
+
+**Arch**
+```bash
+sudo pacman -S --needed niri alacritty fastfetch chafa zsh ttf-jetbrains-mono-nerd git
 ```
 
 **Ubuntu / Debian / Pop!_OS**
 ```bash
 sudo apt update
-sudo apt install niri waybar foot mako fuzzel swww git
+sudo apt install niri alacritty fastfetch chafa zsh git
 ```
 
-> Adjust package names if needed for your distro.
+> Nerd Font may require manual installation on Debian-based systems.
 
 ---
 
@@ -64,7 +75,8 @@ git clone https://github.com/aeroslayys/niri-dotfiles ~/niri-dotfiles
 
 ```bash
 mkdir -p ~/dotfiles_backup
-mv ~/.config/<folder> ~/dotfiles_backup/
+mv ~/.config/niri ~/dotfiles_backup/
+mv ~/.config/alacritty ~/dotfiles_backup/
 ```
 
 ---
@@ -73,20 +85,35 @@ mv ~/.config/<folder> ~/dotfiles_backup/
 
 ```bash
 mkdir -p ~/.config
-ln -sf ~/niri-dotfiles/<folder> ~/.config/
+ln -sf ~/niri-dotfiles/niri ~/.config/
+ln -sf ~/niri-dotfiles/alacritty ~/.config/
 ```
 
-Repeat for each configuration directory you want to use.
+---
+
+### 5️⃣ Zsh Setup
+
+Append the provided configuration:
+
+```bash
+cat ~/niri-dotfiles/zshrc >> ~/.zshrc
+```
+
+Ensure `lemon.png` is placed in:
+
+```
+~/Downloads
+```
 
 ---
 
 ## ⚠️ Auto Installer (Use at Your Own Risk)
 
-An automated installer script is included for convenience.
+An interactive installer script is included for convenience.
 
-⚠️ **This script makes system changes automatically.**
-⚠️ **You are responsible for reviewing it before running.**
-⚠️ **Manual installation is preferred.**
+⚠️ **Manual installation is preferred.**  
+⚠️ Review the script before running.  
+⚠️ You are responsible for changes made to your system.
 
 ---
 
@@ -108,19 +135,64 @@ bash <(curl -sSL https://raw.githubusercontent.com/aeroslayys/niri-dotfiles/main
 
 ## 🧠 What the Auto Installer Does
 
-- Detects distro via `/etc/os-release`
-- Selects correct package manager (`pacman`, `dnf`, `apt`)
-- Prompts for optional components
-- Installs selected packages
-- Clones repo if missing
-- Backs up existing configs
-- Symlinks all directories automatically
+### ✔ 1. Detects Your Distro
+Uses `/etc/os-release` and supports:
 
-Backups are stored in:
+- Fedora → `dnf`
+- Arch → `pacman`
+- Ubuntu / Debian / Pop!_OS → `apt`
+
+If unsupported, it exits and requires manual install.
+
+---
+
+### ✔ 2. Interactive Component Selection
+
+You can choose to install:
+
+- Niri (Compositor)
+- Alacritty (Terminal)
+- Fastfetch & Chafa (Lemon logo tools)
+- Zsh
+- JetBrains Mono Nerd Font  
+  - Fedora → `jetbrains-mono-fonts-all`
+  - Arch → `ttf-jetbrains-mono-nerd`
+
+---
+
+### ✔ 3. Repository Handling
+
+- Clones into `~/niri-dotfiles` (if missing)
+- Skips clone if already present
+
+---
+
+### ✔ 4. Safe Symlinking
+
+- Only links:
+  - `niri`
+  - `alacritty`
+- Existing directories are backed up to:
 
 ```
 ~/dotfiles_backup_YYYYMMDD_HHMMSS
 ```
+
+---
+
+### ✔ 5. Zsh Configuration
+
+- Appends repo `zshrc` into your existing `~/.zshrc`
+- Supports dry-run preview
+- Does **not** overwrite existing `.zshrc`
+
+---
+
+### ✔ 6. Final Reminder
+
+The script reminds you that:
+
+> Manual installation of **Noctalia** is still required.
 
 ---
 
@@ -129,11 +201,11 @@ Backups are stored in:
 | Category        | Tool        |
 |----------------|------------|
 | Compositor     | Niri       |
-| Status Bar     | Waybar     |
-| Terminal       | Foot       |
-| Notifications  | Mako       |
-| Launcher       | Fuzzel     |
-| Wallpaper      | Swww       |
+| Terminal       | Alacritty  |
+| Shell          | Zsh        |
+| System Info    | Fastfetch  |
+| ASCII Renderer | Chafa      |
+| Font           | JetBrains Mono Nerd Font |
 
 ---
 
@@ -147,13 +219,15 @@ Backups are stored in:
 
 ## 🍋 Philosophy
 
-This setup is intentionally minimal and readable, built around:
+This setup is intentionally:
 
-- Proportional tiling
-- High-contrast accents
-- Clean terminal workflow
-- Fast startup
+- Minimal  
+- High-contrast  
+- Proportional  
+- Fast  
+
+Designed around a clean Wayland workflow with citrus flair.
 
 ---
 
-Enjoy your Citrus-powered Wayland setup 🍋
+Enjoy your Lemon Niri setup 🍋
