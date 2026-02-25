@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # --- Configuration ---
-REPO_URL="https://github.com/aeroslayys/niri-dotfiles"
+REPO_URL="https://github.com/aeroslayys/lemon-niri-installer"
 WALLPAPER_URL="https://github.com/JaKooLit/Wallpaper-Bank"
-DOTFILES_DIR="$HOME/niri-dotfiles"
+DOTFILES_DIR="$HOME/lemon-niri-installer"
 WALLPAPER_DIR="$HOME/Pictures/Wallpaper-Bank"
 BACKUP_DIR="$HOME/dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
 
@@ -127,7 +127,7 @@ fi
 
 # --- 6. Repository & Symlinking ---
 if [ ! -d "$DOTFILES_DIR" ]; then
-    echo -e "${CYAN}Cloning your dotfiles...${NC}"
+    echo -e "${CYAN}Cloning lemon niri installer...${NC}"
     run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
 fi
 
