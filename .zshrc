@@ -114,7 +114,7 @@ source $ZSH/oh-my-zsh.sh
 # Color 1 is usually the 'f', Color 2 is the surrounding shape
 clear
 echo ""
-fastfetch --logo ~/dotfiles/lemon.png --logo-type chafa --logo-width 24 --logo-height 12 --chafa-symbols block --color-keys yellow --color-title yellow --structure Title:Separator:OS:Kernel:Uptime:Packages:Shell:WM:Terminal:Memory
+fastfetch --logo ~/niri-dotfiles/lemon.png --logo-type chafa --logo-width 24 --logo-height 12 --chafa-symbols block --color-keys yellow --color-title yellow --structure Title:Separator:OS:Kernel:Uptime:Packages:Shell:WM:Terminal:Memory
 # Redefine the dir segment to use red
 prompt_dir() {
   prompt_segment yellow red '%~'
