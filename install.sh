@@ -195,4 +195,4 @@ if systemd-detect-virt | grep -q "oracle"; then
     echo -e "${MAGENTA}------------------------------------------------------------${NC}"
 fi
 
-echo -e "\n${GREEN}Lemon Niri setup complete!${NC}"
+echo -e "\n${GREEN}Lemon Niri setup complete! Reboot or Logout To apply changes. Github : aeroslayys${NC}"
