@@ -150,8 +150,8 @@ flavor() {
     sed -i "s/--color-title [a-z]*/--color-title $ff_color/g" "$HOME/.zshrc"
 
     # 3. Inject Zsh Prompt Colors into this .zshrc
-    sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
-    sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
+    sed -i --follow-symlinks "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
+    sed -i --follow-symlinks "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
     
     # 4. Reload Niri and Shell
     niri msg action reload-config
