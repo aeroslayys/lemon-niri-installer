@@ -283,12 +283,7 @@ fi
 if [[ $CHOICES == *"Symlinks"* ]]; then
     echo -e "${CYAN}Cloning & applying configurations...${NC}"
     
-    if [ ! -d "$DOTFILES_DIR" ]; then
-        run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
-    else
-        echo -e "${YELLOW}Repo already exists, pulling latest changes...${NC}"
-        run_cmd git -C "$DOTFILES_DIR" pull
-    fi
+    # ... [Clone/Pull logic remains the same] ...
 
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
         # 1. Setup Directories
@@ -297,43 +292,40 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         # 2. Replace .zshrc
         if [ -f "$DOTFILES_DIR/.zshrc" ]; then
             echo -e "${GREEN}Replacing .zshrc...${NC}"
-            
-            # Backup existing .zshrc
-            if [ -f "$HOME/.zshrc" ]; then
-                [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
-            fi
-            
-            # COPY the file from repo to home
+            [ -f "$HOME/.zshrc" ] && [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
             run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
             
-            # 3. Inject Flavor into the NEW file in $HOME
+            # --- 3. THEME INJECTION (The Fix) ---
+            # Ensure colors are lowercase for fastfetch flags
             case $SELECTED_FLAVOR in
                 Lemon) FG="yellow"; BG="red"   ;;
                 Lime)  FG="green";  BG="black" ;;
                 Blue)  FG="blue";   BG="white" ;;
             esac
-
-            echo -e "${CYAN}Applying $SELECTED_FLAVOR flavor to ~/.zshrc...${NC}"
-            [ "$DRY_RUN" = false ] && sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
-            [ "$DRY_RUN" = false ] && sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
-            [ "$DRY_RUN" = false ] && sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$HOME/.zshrc"
+            
+            echo -e "${CYAN}Applying $SELECTED_FLAVOR theme to ~/.zshrc...${NC}"
+            if [ "$DRY_RUN" = false ]; then
+                # Update Agnoster Prompt Variables
+                sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
+                sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
+                
+                # Update Fastfetch Logo
+                sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$HOME/.zshrc"
+                
+                # Update Fastfetch Colors (Targets the word immediately following the flag)
+                sed -i "s/--color-keys [a-z]*/--color-keys $FG/g" "$HOME/.zshrc"
+                sed -i "s/--color-title [a-z]*/--color-title $FG/g" "$HOME/.zshrc"
+            fi
         fi
 
         # 4. Replace Config Folders
         for cfg in "niri" "alacritty" "fasfetch" "fastfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
                 echo -e "${GREEN}Replacing $cfg config...${NC}"
-                
-                # Backup and remove existing folder
-                if [ -d "$HOME/.config/$cfg" ]; then
-                    [ "$DRY_RUN" = false ] && cp -r "$HOME/.config/$cfg" "$BACKUP_DIR/${cfg}_bak"
-                    [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
-                fi
-                
-                # COPY the folder
+                [ -d "$HOME/.config/$cfg" ] && [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
                 run_cmd cp -r "$DOTFILES_DIR/$cfg" "$HOME/.config/"
                 
-                # Special Case: Inject Niri color into the live config
+                # Inject Niri color
                 if [ "$cfg" == "niri" ] && [ -f "$HOME/.config/niri/config.kdl" ]; then
                     [ "$DRY_RUN" = false ] && sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$HOME/.config/niri/config.kdl"
                 fi

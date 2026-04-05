@@ -130,10 +130,10 @@ flavor() {
     case $choice in
         lemon) 
             hex="#FFED29"; logo="lemon.png"; ff_color="yellow"
-            fg_color="yellow"; bg_color="red" ;;
+            fg_color="yellow"; bg_color="white" ;;
         lime)  
             hex="#32CD32"; logo="green1.png"; ff_color="green"
-            fg_color="green"; bg_color="black" ;;
+            fg_color="green"; bg_color="white" ;;
         blue)  
             hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"
             fg_color="blue"; bg_color="white" ;;
