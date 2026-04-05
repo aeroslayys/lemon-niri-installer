@@ -283,17 +283,30 @@ fi
 if [[ $CHOICES == *"Symlinks"* ]]; then
     echo -e "${CYAN}Cloning & applying configurations...${NC}"
     
-    # [Clone/Pull Logic stays the same]
+    # --- RESTORED CLONE LOGIC ---
+    if [ ! -d "$DOTFILES_DIR" ]; then
+        echo -e "${CYAN}Cloning repository to $DOTFILES_DIR...${NC}"
+        run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
+    else
+        echo -e "${YELLOW}Repo already exists, pulling latest changes...${NC}"
+        run_cmd git -C "$DOTFILES_DIR" pull
+    fi
 
+    # Ensure the directory actually exists before proceeding
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
+        
         # 1. Setup Directories
         [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-        # 2. Replace Config Folders (Handling the 'fasfetch' typo)
+        # 2. Replace Config Folders (niri, alacritty, and the 'fasfetch' typo folder)
         for cfg in "niri" "alacritty" "fasfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
                 echo -e "${GREEN}Replacing $cfg config...${NC}"
-                [ -d "$HOME/.config/$cfg" ] && [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
+                # Backup if exists
+                if [ -d "$HOME/.config/$cfg" ]; then
+                    [ "$DRY_RUN" = false ] && cp -r "$HOME/.config/$cfg" "$BACKUP_DIR/${cfg}_bak"
+                    [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
+                fi
                 run_cmd cp -r "$DOTFILES_DIR/$cfg" "$HOME/.config/"
             fi
         done
@@ -301,11 +314,13 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         # 3. Handle .zshrc Replacement
         if [ -f "$DOTFILES_DIR/.zshrc" ]; then
             echo -e "${GREEN}Replacing .zshrc...${NC}"
-            [ -f "$HOME/.zshrc" ] && [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            if [ -f "$HOME/.zshrc" ]; then
+                [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            fi
             run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
         fi
 
-        # --- 4. THEME INJECTION (The "Fuzzy" JSON Fix) ---
+        # --- 4. THEME INJECTION (The Fuzzy Fix) ---
         case $SELECTED_FLAVOR in
             Lemon) FG="yellow"; BG="red";   HEX="#FFED29"; LOGO="lemon.png" ;;
             Lime)  FG="green";  BG="black";  HEX="#32CD32"; LOGO="green1.png" ;;
@@ -316,18 +331,16 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
             echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor...${NC}"
 
             # A. Update Zsh Prompt
-            sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
-            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
+            [ -f "$HOME/.zshrc" ] && sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
+            [ -f "$HOME/.zshrc" ] && sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
 
             # B. Update Fastfetch JSON Config
             JSON_CONF="$HOME/.config/fasfetch/config.jsonc"
             if [ -f "$JSON_CONF" ]; then
                 echo -e "${DIM}Updating JSON at $JSON_CONF${NC}"
-                
-                # Update logo source (Fuzzy match for any whitespace/quotes)
+                # Update logo source with fuzzy match
                 sed -i "s|\"source\":[[:space:]]*\".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
-                
-                # Update the display colors (Fuzzy match for keys and title)
+                # Update keys and title colors
                 sed -i "s/\"keys\":[[:space:]]*\".*\"/\"keys\": \"$FG\"/g" "$JSON_CONF"
                 sed -i "s/\"title\":[[:space:]]*\".*\"/\"title\": \"$FG\"/g" "$JSON_CONF"
             fi
@@ -340,7 +353,6 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         fi
     fi
 fi
-
 # --- Final Check ---
 if systemd-detect-virt | grep -q "oracle"; then
     echo -e "\n${YELLOW}VirtualBox detected. Ensure 3D Acceleration is ON.${NC}"
