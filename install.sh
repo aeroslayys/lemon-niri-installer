@@ -305,11 +305,11 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
             run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
         fi
 
-        # --- 4. THEME INJECTION (The JSON Fix) ---
+        # --- 4. THEME INJECTION (The "Fuzzy" JSON Fix) ---
         case $SELECTED_FLAVOR in
-            Lemon) FG="yellow"; BG="red";   HEX="#FFED29" ;;
-            Lime)  FG="green";  BG="black";  HEX="#32CD32" ;;
-            Blue)  FG="blue";   BG="white";  HEX="#00B4D8" ;;
+            Lemon) FG="yellow"; BG="red";   HEX="#FFED29"; LOGO="lemon.png" ;;
+            Lime)  FG="green";  BG="black";  HEX="#32CD32"; LOGO="green1.png" ;;
+            Blue)  FG="blue";   BG="white";  HEX="#00B4D8"; LOGO="blue-lemon.png" ;;
         esac
 
         if [ "$DRY_RUN" = false ]; then
@@ -319,19 +319,24 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
             sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
             sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
 
-            # B. Update Fastfetch JSON (The precise way)
+            # B. Update Fastfetch JSON Config
             JSON_CONF="$HOME/.config/fasfetch/config.jsonc"
             if [ -f "$JSON_CONF" ]; then
-                # Update logo source
-                sed -i "s|\"source\": \".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
+                echo -e "${DIM}Updating JSON at $JSON_CONF${NC}"
                 
-                # Update the display colors for both keys and title
-                sed -i "s/\"keys\": \".*\"/\"keys\": \"$FG\"/g" "$JSON_CONF"
-                sed -i "s/\"title\": \".*\"/\"title\": \"$FG\"/g" "$JSON_CONF"
+                # Update logo source (Fuzzy match for any whitespace/quotes)
+                sed -i "s|\"source\":[[:space:]]*\".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
+                
+                # Update the display colors (Fuzzy match for keys and title)
+                sed -i "s/\"keys\":[[:space:]]*\".*\"/\"keys\": \"$FG\"/g" "$JSON_CONF"
+                sed -i "s/\"title\":[[:space:]]*\".*\"/\"title\": \"$FG\"/g" "$JSON_CONF"
             fi
 
             # C. Update Niri
-            [ -f "$HOME/.config/niri/config.kdl" ] && sed -i "s/active-color \".*\"/active-color \"$HEX\"/g" "$HOME/.config/niri/config.kdl"
+            NIRI_CONF="$HOME/.config/niri/config.kdl"
+            if [ -f "$NIRI_CONF" ]; then
+                sed -i "s/active-color \".*\"/active-color \"$HEX\"/g" "$NIRI_CONF"
+            fi
         fi
     fi
 fi
