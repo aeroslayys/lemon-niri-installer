@@ -294,49 +294,50 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
     fi
 
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
-        # 1. Inject Theme into Config Files (Repo Side)
+        # 1. Inject Theme into Repo Files
         echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor into configurations...${NC}"
         
+        # Calculate colors for Zsh Prompt injection
+        case $SELECTED_FLAVOR in
+            Lemon) FG="yellow"; BG="red" ;;
+            Lime)  FG="green";  BG="black" ;;
+            Blue)  FG="blue";   BG="white" ;;
+        esac
+
         # Theme Niri Focus Ring
-        sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
-        
-        # Theme Fastfetch Config (if using jsonc)
-        if [ -f "$DOTFILES_DIR/fastfetch/config.jsonc" ]; then
-            sed -i "s|\"source\": \".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$DOTFILES_DIR/fastfetch/config.jsonc"
+        if [ -f "$DOTFILES_DIR/niri/config.kdl" ]; then
+            sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
         fi
 
-        # Theme Zshrc (Injecting Logo and Agnoster Colors into the repo file)
+        # Theme Zshrc in the Repo (Crucial step)
         if [ -f "$DOTFILES_DIR/zshrc" ]; then
-            # Set the Agnoster Colors
-            case $SELECTED_FLAVOR in
-                Lemon) FG="yellow"; BG="red" ;;
-                Lime)  FG="green";  BG="black" ;;
-                Blue)  FG="blue";   BG="white" ;;
-            esac
-            
             sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$DOTFILES_DIR/zshrc"
-            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$DOTFILES_DIR/zshrc"
-            
-            # Update the hardcoded fastfetch line in zshrc
+            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg\"/g" "$DOTFILES_DIR/zshrc"
+            # Update the hardcoded fastfetch line in the repo file
             sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$DOTFILES_DIR/zshrc"
         fi
 
         # 2. Setup Directories
         [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-        # 3. Apply Zshrc Symlink
+        # 3. Apply Zshrc Symlink (Fixing the path check)
+        # Check if file exists in repo before trying to link
         if [ -f "$DOTFILES_DIR/zshrc" ]; then
-            echo -e "${CYAN}Backing up and linking .zshrc...${NC}"
-            # Only backup if it's a real file, don't backup existing symlinks to avoid clutter
-            [ "$DRY_RUN" = false ] && [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            echo -e "${CYAN}Linking .zshrc...${NC}"
+            # Backup existing .zshrc if it's a real file
+            if [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+                [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            fi
+            # Create the link
             run_cmd ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+        else
+            echo -e "${RED}Error: zshrc not found in $DOTFILES_DIR${NC}"
         fi
 
         # 4. Apply Config Folders
         for cfg in "niri" "alacritty" "fuzzel" "noctalia" "fastfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
                 echo -e "${CYAN}Linking $cfg config...${NC}"
-                # Remove existing directory/link to prevent nested folder bugs
                 [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
                 run_cmd ln -sf "$DOTFILES_DIR/$cfg" "$HOME/.config/"
             fi
