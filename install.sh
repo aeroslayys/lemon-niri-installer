@@ -309,7 +309,7 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         fi
 
         # 2. Theme Zshrc (Repo Side)
-        if [ -f "$DOTFILES_DIR/zshrc" ]; then
+        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
             # Inject Agnoster Prompt Colors
             sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$DOTFILES_DIR/zshrc"
             sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$DOTFILES_DIR/zshrc"
@@ -336,7 +336,7 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
                 echo -e "${DIM}Backing up existing .zshrc to $BACKUP_DIR${NC}"
                 [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
             fi
-            run_cmd ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+            run_cmd ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
         fi
 
         # 2. Apply Config Folders (niri, alacritty, fuzzel, noctalia, fastfetch)
