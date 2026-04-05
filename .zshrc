@@ -117,6 +117,25 @@ fastfetch --config ~/.config/fasfetch/config.jsonc
 export CURRENT_FG="white"
 export CURRENT_BG="blue"
 
+# --- 2. Override Agnoster Segments ---
+# This fixes the "Background is always Blue" issue
+prompt_context() {
+  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+    # Use YOUR variables here instead of hardcoded colors
+    prompt_segment $CURRENT_BG $CURRENT_FG "%(!.%{%F{yellow}%}.)$USER@%m"
+  fi
+}
+
+prompt_git() {
+  local ref
+  if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+    ZSH_THEME_GIT_PROMPT_CLEAN=""
+    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev HEAD | head -n1)"
+    # This fixes the Git segment background
+    prompt_segment $CURRENT_BG $CURRENT_FG "${ref#refs/heads/} $(git_prompt_status)"
+  fi
+}
+
 prompt_dir() {
   prompt_segment $CURRENT_FG $CURRENT_BG '%~'
 }
