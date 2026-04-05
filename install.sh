@@ -313,19 +313,21 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         esac
 
         if [ "$DRY_RUN" = false ]; then
-            echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor into local configs...${NC}"
+            echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor...${NC}"
 
-            # A. Update Zsh Prompt Colors
+            # A. Update Zsh Prompt
             sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
             sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
 
-            # B. Update Fastfetch JSON Config
+            # B. Update Fastfetch JSON (The precise way)
             JSON_CONF="$HOME/.config/fasfetch/config.jsonc"
             if [ -f "$JSON_CONF" ]; then
-                # Update the logo source path
+                # Update logo source
                 sed -i "s|\"source\": \".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
-                # Update the display color
-                sed -i "s/\"color\": \".*\"/\"color\": \"$FG\"/g" "$JSON_CONF"
+                
+                # Update the display colors for both keys and title
+                sed -i "s/\"keys\": \".*\"/\"keys\": \"$FG\"/g" "$JSON_CONF"
+                sed -i "s/\"title\": \".*\"/\"title\": \"$FG\"/g" "$JSON_CONF"
             fi
 
             # C. Update Niri
