@@ -1,0 +1,24 @@
+{
+    "logo": {
+        "source": "~/lemon-niri-installer/lemon.png",
+        "type": "chafa",
+        "width": 24,
+        "height": 12,
+        "chafa-symbols": "block"
+    },
+    "display": {
+        "color": "yellow" 
+    },
+    "modules": [
+        "title",
+        "separator",
+        "os",
+        "kernel",
+        "uptime",
+        "packages",
+        "shell",
+        "wm",
+        "terminal",
+        "memory"
+    ]
+}

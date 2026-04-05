@@ -1,10 +1,29 @@
 # 🍋 Lemon Niri Installer
 
-![Preview of my Lemon Niri Setup](preview.png)
-
-A citrus-themed Wayland desktop installer built around **Niri** with proportional tiling and bold yellow accents.
+A citrus-themed Wayland desktop installer built around **Niri** with proportional tiling and bold accent colors.
 
 Minimal. Bright. Functional.
+
+---
+
+# 🎨 Pick Your Flavor
+
+Choose your accent color when the installer launches:
+
+| Flavor | Color | Hex |
+|--------|-------|-----|
+| 🍋 Lemon | Classic Yellow | `#FFED29` |
+| 🍈 Lime | Fresh Green | `#32CD32` |
+| 🫐 Blue | Blue Lemonade | `#00B4D8` |
+
+### 🍋 Lemon
+![Lemon Preview](lemonpreview.png)
+
+### 🍈 Lime
+![Lime Preview](greenpreview.png)
+
+### 🫐 Blue
+![Blue Preview](bluepreview.png)
 
 ---
 
@@ -20,10 +39,10 @@ Minimal. Bright. Functional.
 
 Manual installation is strongly recommended so you:
 
-- Understand system changes  
-- Control backups  
-- Avoid unintended overwrites  
-- Learn your environment structure  
+- Understand system changes
+- Control backups
+- Avoid unintended overwrites
+- Learn your environment structure
 
 ---
 
@@ -86,15 +105,13 @@ cd ~/lemon-niri-installer
 ```bash
 chmod +x install.sh
 ./install.sh
-
 ```
 
 Preview changes safely:
 
 ```bash
 chmod +x install.sh
-./install.sh --dry-run 
-
+./install.sh --dry-run
 ```
 
 ---
@@ -104,13 +121,13 @@ chmod +x install.sh
 Dry-run mode:
 
 ```bash
-bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw) --dry-run
+bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw/install.sh) --dry-run
 ```
 
 Execute installer:
 
 ```bash
-bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw)
+bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw/install.sh)
 ```
 
 ---
@@ -118,13 +135,18 @@ bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed
 # ⚠️ Interactive Auto Installer
 
 ✔ Supports:
-- Fedora  
-- Arch  
+- Fedora
+- Arch
+- Ubuntu / Debian *(experimental — not fully tested, expect rough edges)*
 
-✔ Fully interactive  
-✔ Safe backups  
-✔ `--dry-run` support  
-✔ Optional wallpaper installation (~1GB)  
+✔ Fully interactive custom TUI (no external dependencies)
+✔ Navigate with `j`/`k` or arrow keys
+✔ `SPACE` to toggle components, `ENTER` to confirm, `e` to exit at any time
+✔ Safe backups
+✔ `--dry-run` support
+✔ Optional wallpaper installation (~1GB)
+
+> **Note:** Ubuntu and Debian support is present in the installer but has **not been tested**. Some packages (particularly Noctalia) may require manual compilation on Debian-based systems. Fedora and Arch are the primary supported targets.
 
 ---
 
@@ -138,7 +160,7 @@ It will prioritize existing helpers such as:
 - `paru`
 - `aurutils`
 
-If none of these are detected, the installer will automatically install a `yay` helper to complete the environment setup.
+If none of these are detected, the installer will automatically install `yay` to complete the environment setup.
 
 This ensures a smooth experience while respecting existing Arch workflows.
 
@@ -168,7 +190,6 @@ This ensures a smooth experience while respecting existing Arch workflows.
 
 ---
 
-
 ## ✔ Special Package Handling
 
 ### Niri
@@ -186,16 +207,27 @@ This ensures a smooth experience while respecting existing Arch workflows.
 
 ## ✔ Interactive Component Selection
 
+The installer uses a fully custom terminal UI — no `whiptail` or external TUI libraries required.
+
 You can choose to install:
 
 - Niri (Window Manager)
 - Noctalia (Status Bar)
-- Fuzzel (App Launcher)
-- Alacritty (Terminal)
-- Fastfetch & Chafa
-- Zsh
-- Wallpaper Bank
-- Gruvbox Theme Injection
+- Bibata Cursor (Modern Ice)
+- Tools — Fuzzel, Alacritty, Fastfetch, Chafa
+- Zsh + Oh My Zsh
+- Wallpaper Bank (~1GB, off by default)
+- Symlinks & Theming
+
+**Controls:**
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Move down |
+| `k` / `↑` | Move up |
+| `SPACE` | Toggle component (checklist) |
+| `ENTER` | Confirm selection |
+| `e` | Exit installer immediately |
 
 Nothing installs without confirmation.
 
@@ -233,25 +265,26 @@ sudo pacman -S virtualbox-guest-utils
 
 # 🛠️ Components Overview
 
-| Category      | Tool        |
-|--------------|------------|
-| Compositor   | Niri       |
-| Terminal     | Alacritty  |
-| Status Bar   | Noctalia   |
-| Launcher     | Fuzzel     |
-| System Info  | Fastfetch  |
-| ASCII Render | Chafa      |
-| Shell        | Zsh        |
+| Category      | Tool              |
+|--------------|-------------------|
+| Compositor   | Niri              |
+| Terminal     | Alacritty         |
+| Status Bar   | Noctalia          |
+| Launcher     | Fuzzel            |
+| System Info  | Fastfetch         |
+| ASCII Render | Chafa             |
+| Shell        | Zsh               |
+| Cursor       | Bibata Modern Ice |
 
 ---
 
 # ⚙️ Key Specs
 
-- **Window Ratio:** 0.5 default column width  
-- **Theme:** Gruvbox-inspired citrus contrast  
-- **Layout:** Proportional tiling  
-- **Bar:** Noctalia (GTK4-based)  
-- **Installer:** Interactive with dry-run support  
+- **Window Ratio:** 0.5 default column width
+- **Theme:** Gruvbox-inspired citrus contrast
+- **Layout:** Proportional tiling
+- **Bar:** Noctalia (GTK4-based)
+- **Installer:** Interactive with dry-run support
 
 ---
 
@@ -265,10 +298,10 @@ Designed for clarity, speed, and simplicity.
 
 # 🤝 Credits & Appreciations
 
-- **[Niri](https://github.com/niri-wm/niri)** — The scrollable Wayland compositor that makes this all possible.  
-- **[Noctalia](https://noctalia.dev/)** — For the beautiful, customizable bar and shell.  
-- **[JaKooLit](https://github.com/JaKooLit)** — Inspiration for the interactive installation flow and the Wallpaper-Bank.  
-- **[Bibata Cursor](https://github.com/ful1e5/bibata)** — For the sleek Modern Ice cursor theme.  
+- **[Niri](https://github.com/niri-wm/niri)** — The scrollable Wayland compositor that makes this all possible.
+- **[Noctalia](https://noctalia.dev/)** — For the beautiful, customizable bar and shell.
+- **[JaKooLit](https://github.com/JaKooLit)** — Inspiration for the interactive installation flow and the Wallpaper-Bank.
+- **[Bibata Cursor](https://github.com/ful1e5/bibata)** — For the sleek Modern Ice cursor theme.
 - **The Fedora and Arch Communities** — For maintaining the repositories and COPR/AUR infrastructure.
 
 ---

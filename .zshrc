@@ -73,15 +73,9 @@ ZSH_THEME="agnoster"
 plugins=(git zsh-autosuggestions)
 
 # Change the prompt background to Red
-AGNOSTER_PROMPT_SEGMENTS_COLOR=yellow
+#AGNOSTER_PROMPT_SEGMENTS_COLOR=yellow
 
-# Optional: Change the user context (the 'user@host' part)
-prompt_context() {
-  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
-    prompt_segment yellow white "%n@%m"
-  fi
-}
-source $ZSH/oh-my-zsh.sh
+
 
 # User configuration
 
@@ -114,8 +108,62 @@ source $ZSH/oh-my-zsh.sh
 # Color 1 is usually the 'f', Color 2 is the surrounding shape
 clear
 echo ""
-fastfetch --logo ~/lemon-niri-installer/lemon.png --logo-type chafa --logo-width 24 --logo-height 12 --chafa-symbols block --color-keys yellow --color-title yellow --structure Title:Separator:OS:Kernel:Uptime:Packages:Shell:WM:Terminal:Memory
-# Redefine the dir segment to use red
+# --- Agnoster Customization ---
+# These variables will be updated by the flavor() function
+CURRENT_FG="yellow"
+CURRENT_BG="red"
+
+# Optional: Change the user context (the 'user@host' part)
+prompt_context() {
+  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+    # Uses the dynamic flavor foreground
+    prompt_segment $CURRENT_FG white "%n@%m"
+  fi
+}
+
+source $ZSH/oh-my-zsh.sh
+
+# --- Terminal Greeting ---
+fastfetch
+
+# --- Prompt Customization ---
+# Redefine the dir segment to use dynamic background/foreground
 prompt_dir() {
-  prompt_segment yellow red '%~'
+  prompt_segment $CURRENT_FG $CURRENT_BG '%~'
+}
+
+# --- The Flavor Engine ---
+flavor() {
+    local choice=$1
+    local hex logo ff_color fg_color bg_color
+    case $choice in
+        lemon) 
+            hex="#FFED29"; logo="lemon.png"; ff_color="yellow"
+            fg_color="yellow"; bg_color="red" ;;
+        lime)  
+            hex="#32CD32"; logo="green1.png"; ff_color="green"
+            fg_color="green"; bg_color="black" ;;
+        blue)  
+            hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"
+            fg_color="blue"; bg_color="white" ;;
+        *) echo "Usage: flavor [lemon|lime|blue]"; return 1 ;;
+    esac
+
+    # 1. Update Niri Border Color
+    sed -i "s/active-color \".*\"/active-color \"$hex\"/g" "$HOME/.config/niri/config.kdl"
+    
+    # 2. Update Fastfetch
+    if [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
+        sed -i "s/\"source\": \".*\"/\"source\": \"~\/lemon-niri-installer\/$logo\"/g" "$HOME/.config/fastfetch/config.jsonc"
+        sed -i "s/\"color\": \".*\"/\"color\": \"$ff_color\"/g" "$HOME/.config/fastfetch/config.jsonc"
+    fi
+
+    # 3. Update Zsh Prompt Colors (Self-modifying .zshrc)
+    sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
+    sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
+    
+    # 4. Reload Niri
+    niri msg action reload-config && echo -e "Switched to \033[1m$choice\033[0m flavor!"
+    # Reload the current shell to apply prompt changes instantly
+    exec zsh
 }
