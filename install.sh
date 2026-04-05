@@ -283,7 +283,6 @@ fi
 if [[ $CHOICES == *"Symlinks"* ]]; then
     echo -e "${CYAN}Cloning & applying configurations...${NC}"
     
-    # Ensure the repo exists or pull latest
     if [ ! -d "$DOTFILES_DIR" ]; then
         run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
     else
@@ -292,62 +291,47 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
     fi
 
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
-        # --- STAGE A: THEME THE FILES FIRST ---
-        echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor into configurations...${NC}"
-        
-        # Calculate local color variables for Zsh injection
+        # 1. Inject Theme (Repo Side)
         case $SELECTED_FLAVOR in
             Lemon) FG="yellow"; BG="red"   ;;
             Lime)  FG="green";  BG="black" ;;
             Blue)  FG="blue";   BG="white" ;;
-            *)     FG="yellow"; BG="red"   ;; # Safe fallback
         esac
 
-        # 1. Theme Niri (Repo Side)
-        if [ -f "$DOTFILES_DIR/niri/config.kdl" ]; then
-            sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
-        fi
-
-        # 2. Theme Zshrc (Repo Side)
-        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
-            # Inject Agnoster Prompt Colors
-            sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$DOTFILES_DIR/zshrc"
-            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$DOTFILES_DIR/zshrc"
-            
-            # Inject Fastfetch Logo path (Using | as delimiter for path safety)
-            sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$DOTFILES_DIR/zshrc"
-            
-            # Inject Fastfetch Colors based on flavor
-            FF_COLOR=$(echo "$FG" | tr '[:upper:]' '[:lower:]')
-            sed -i "s/--color-keys [a-z]*/--color-keys $FF_COLOR/g" "$DOTFILES_DIR/zshrc"
-            sed -i "s/--color-title [a-z]*/--color-title $FF_COLOR/g" "$DOTFILES_DIR/zshrc"
-        fi
-
-        # --- STAGE B: CREATE SYMLINKS ---
-        echo -e "${CYAN}Applying symlinks to system...${NC}"
+        echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor into Repo...${NC}"
         
-        # Ensure target config directory and backup directory exist
+        # Theme Niri
+        [ -f "$DOTFILES_DIR/niri/config.kdl" ] && sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
+        
+        # Theme .zshrc (Matching the filename in your screenshot)
+        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
+            sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$DOTFILES_DIR/.zshrc"
+            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$DOTFILES_DIR/.zshrc"
+            sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$DOTFILES_DIR/.zshrc"
+        fi
+
+        # 2. Setup Directories
         [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-        # 1. Apply .zshrc Link
-        if [ -f "$DOTFILES_DIR/zshrc" ]; then
-            # Backup existing .zshrc if it's a real file (not a link)
+        # 3. Apply .zshrc Symlink
+        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
+            echo -e "${GREEN}Linking .zshrc...${NC}"
+            # Backup only if it's a real file
             if [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
-                echo -e "${DIM}Backing up existing .zshrc to $BACKUP_DIR${NC}"
                 [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
             fi
             run_cmd ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
         fi
 
-        # 2. Apply Config Folders (niri, alacritty, fuzzel, noctalia, fastfetch)
-        for cfg in "niri" "alacritty" "fuzzel" "noctalia" "fastfetch"; do
+        # 4. Apply Config Folders
+        # Only looping through what is actually in your screenshot
+        for cfg in "niri" "alacritty" "fasfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
-                echo -e "${CYAN}Linking $cfg config folder...${NC}"
-                # Remove existing folder/link to prevent "folder-inside-folder" symlink bug
+                echo -e "${GREEN}Linking $cfg config folder...${NC}"
                 [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
                 run_cmd ln -sf "$DOTFILES_DIR/$cfg" "$HOME/.config/"
             else
-                echo -e "${DIM}Skipping $cfg: folder not found in repo.${NC}"
+                echo -e "${DIM}Skipping $cfg (not in repo)${NC}"
             fi
         done
     fi
