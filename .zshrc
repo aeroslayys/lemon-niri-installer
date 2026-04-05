@@ -114,8 +114,8 @@ echo ""
 fastfetch --config ~/.config/fasfetch/config.jsonc
 # --- 2. Prompt Customization (Dynamically Updated) ---
 # These variables will be updated by the flavor() function
-CURRENT_FG="yellow"
-CURRENT_BG="red"
+export CURRENT_FG="white"
+export CURRENT_BG="blue"
 
 prompt_dir() {
   prompt_segment $CURRENT_FG $CURRENT_BG '%~'
@@ -130,13 +130,13 @@ flavor() {
     case $choice in
         lemon) 
             hex="#FFED29"; logo="lemon.png"; ff_color="yellow"
-            fg_color="yellow"; bg_color="white" ;;
+            fg_color="white"; bg_color="yellow" ;;
         lime)  
             hex="#32CD32"; logo="green1.png"; ff_color="green"
-            fg_color="green"; bg_color="white" ;;
+            fg_color="white"; bg_color="green" ;;
         blue)  
             hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"
-            fg_color="blue"; bg_color="white" ;;
+            fg_color="white"; bg_color="blue" ;;
         *) echo "Usage: flavor [lemon|lime|blue]"; return 1 ;;
     esac
 
@@ -150,8 +150,8 @@ flavor() {
     sed -i "s/--color-title [a-z]*/--color-title $ff_color/g" "$HOME/.zshrc"
 
     # 3. Inject Zsh Prompt Colors into this .zshrc
-    sed -i --follow-symlinks "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
-    sed -i --follow-symlinks "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
+    sed -i --follow-symlinks "s/export CURRENT_FG=\".*\"/export CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
+    sed -i --follow-symlinks "s/export CURRENT_BG=\".*\"/export CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
     
     # 4. Reload Niri and Shell
     niri msg action reload-config
