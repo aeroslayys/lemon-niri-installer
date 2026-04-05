@@ -130,13 +130,13 @@ flavor() {
     case $choice in
         lemon) 
             hex="#FFED29"; logo="lemon.png"; ff_color="yellow"
-            fg_color="white"; bg_color="yellow" ;;
+            fg_color="white"; bg_color="white" ;;
         lime)  
             hex="#32CD32"; logo="green1.png"; ff_color="green"
-            fg_color="white"; bg_color="green" ;;
+            fg_color="white"; bg_color="white" ;;
         blue)  
             hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"
-            fg_color="white"; bg_color="blue" ;;
+            fg_color="white"; bg_color="white" ;;
         *) echo "Usage: flavor [lemon|lime|blue]"; return 1 ;;
     esac
 
