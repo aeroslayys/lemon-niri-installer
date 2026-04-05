@@ -303,35 +303,39 @@ if [[ $CHOICES == *"Symlinks"* ]]; then
         # Theme Niri
         [ -f "$DOTFILES_DIR/niri/config.kdl" ] && sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
         
-        # Theme .zshrc (Matching the filename in your screenshot)
+        # Theme .zshrc 
         if [ -f "$DOTFILES_DIR/.zshrc" ]; then
             sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$DOTFILES_DIR/.zshrc"
             sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$DOTFILES_DIR/.zshrc"
+            # Path-safe sed for the logo
             sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$DOTFILES_DIR/.zshrc"
         fi
 
         # 2. Setup Directories
         [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-        # 3. Apply .zshrc Symlink
+        # 3. Apply .zshrc Symlink (The "Force" Method)
         if [ -f "$DOTFILES_DIR/.zshrc" ]; then
             echo -e "${GREEN}Linking .zshrc...${NC}"
-            # Backup only if it's a real file
+            
+            # Backup if it's a real file (not a link)
             if [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+                echo -e "${DIM}Backing up pre-existing .zshrc...${NC}"
                 [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
             fi
+            
+            # FORCE REMOVE before linking to ensure the link actually lands
+            [ "$DRY_RUN" = false ] && rm -f "$HOME/.zshrc"
             run_cmd ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
         fi
 
         # 4. Apply Config Folders
-        # Only looping through what is actually in your screenshot
-        for cfg in "niri" "alacritty" "fasfetch"; do
+        # Note: 'fasfetch' matches your repo spelling; 'fastfetch' is added for future-proofing
+        for cfg in "niri" "alacritty" "fasfetch" "fastfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
                 echo -e "${GREEN}Linking $cfg config folder...${NC}"
                 [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
                 run_cmd ln -sf "$DOTFILES_DIR/$cfg" "$HOME/.config/"
-            else
-                echo -e "${DIM}Skipping $cfg (not in repo)${NC}"
             fi
         done
     fi
