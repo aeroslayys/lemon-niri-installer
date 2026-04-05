@@ -110,8 +110,8 @@ clear
 echo ""
 # --- 1. Terminal Greeting (Dynamically Updated) ---
 # The flavor() function will overwrite this line specifically
-fastfetch --logo ~/lemon-niri-installer/lemon.png --logo-type chafa --logo-width 26 --logo-height 12 --chafa-symbols block --color-keys yellow --color-title yellow --structure Title:Separator:OS:Kernel:Uptime:Packages:Shell:WM:Terminal:Memory
-
+# --- Terminal Greeting ---
+fastfetch --config ~/.config/fasfetch/config.jsonc
 # --- 2. Prompt Customization (Dynamically Updated) ---
 # These variables will be updated by the flavor() function
 CURRENT_FG="yellow"

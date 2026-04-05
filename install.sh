@@ -283,54 +283,54 @@ fi
 if [[ $CHOICES == *"Symlinks"* ]]; then
     echo -e "${CYAN}Cloning & applying configurations...${NC}"
     
-    # ... [Clone/Pull logic remains the same] ...
+    # [Clone/Pull Logic stays the same]
 
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
         # 1. Setup Directories
         [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
 
-        # 2. Replace .zshrc
-        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
-            echo -e "${GREEN}Replacing .zshrc...${NC}"
-            [ -f "$HOME/.zshrc" ] && [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
-            run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-            
-            # --- 3. THEME INJECTION (The Fix) ---
-            # Ensure colors are lowercase for fastfetch flags
-            case $SELECTED_FLAVOR in
-                Lemon) FG="yellow"; BG="red"   ;;
-                Lime)  FG="green";  BG="black" ;;
-                Blue)  FG="blue";   BG="white" ;;
-            esac
-            
-            echo -e "${CYAN}Applying $SELECTED_FLAVOR theme to ~/.zshrc...${NC}"
-            if [ "$DRY_RUN" = false ]; then
-                # Update Agnoster Prompt Variables
-                sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
-                sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
-                
-                # Update Fastfetch Logo
-                sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$LOGO|g" "$HOME/.zshrc"
-                
-                # Update Fastfetch Colors (Targets the word immediately following the flag)
-                sed -i "s/--color-keys [a-z]*/--color-keys $FG/g" "$HOME/.zshrc"
-                sed -i "s/--color-title [a-z]*/--color-title $FG/g" "$HOME/.zshrc"
-            fi
-        fi
-
-        # 4. Replace Config Folders
-        for cfg in "niri" "alacritty" "fasfetch" "fastfetch"; do
+        # 2. Replace Config Folders (Handling the 'fasfetch' typo)
+        for cfg in "niri" "alacritty" "fasfetch"; do
             if [ -d "$DOTFILES_DIR/$cfg" ]; then
                 echo -e "${GREEN}Replacing $cfg config...${NC}"
                 [ -d "$HOME/.config/$cfg" ] && [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
                 run_cmd cp -r "$DOTFILES_DIR/$cfg" "$HOME/.config/"
-                
-                # Inject Niri color
-                if [ "$cfg" == "niri" ] && [ -f "$HOME/.config/niri/config.kdl" ]; then
-                    [ "$DRY_RUN" = false ] && sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$HOME/.config/niri/config.kdl"
-                fi
             fi
         done
+
+        # 3. Handle .zshrc Replacement
+        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
+            echo -e "${GREEN}Replacing .zshrc...${NC}"
+            [ -f "$HOME/.zshrc" ] && [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
+        fi
+
+        # --- 4. THEME INJECTION (The JSON Fix) ---
+        case $SELECTED_FLAVOR in
+            Lemon) FG="yellow"; BG="red";   HEX="#FFED29" ;;
+            Lime)  FG="green";  BG="black";  HEX="#32CD32" ;;
+            Blue)  FG="blue";   BG="white";  HEX="#00B4D8" ;;
+        esac
+
+        if [ "$DRY_RUN" = false ]; then
+            echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor into local configs...${NC}"
+
+            # A. Update Zsh Prompt Colors
+            sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
+            sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
+
+            # B. Update Fastfetch JSON Config
+            JSON_CONF="$HOME/.config/fasfetch/config.jsonc"
+            if [ -f "$JSON_CONF" ]; then
+                # Update the logo source path
+                sed -i "s|\"source\": \".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
+                # Update the display color
+                sed -i "s/\"color\": \".*\"/\"color\": \"$FG\"/g" "$JSON_CONF"
+            fi
+
+            # C. Update Niri
+            [ -f "$HOME/.config/niri/config.kdl" ] && sed -i "s/active-color \".*\"/active-color \"$HEX\"/g" "$HOME/.config/niri/config.kdl"
+        fi
     fi
 fi
 
