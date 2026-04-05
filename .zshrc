@@ -108,31 +108,22 @@ plugins=(git zsh-autosuggestions)
 # Color 1 is usually the 'f', Color 2 is the surrounding shape
 clear
 echo ""
-# --- Agnoster Customization ---
+# --- 1. Terminal Greeting (Dynamically Updated) ---
+# The flavor() function will overwrite this line specifically
+fastfetch --logo ~/lemon-niri-installer/lemon.png --logo-type chafa --logo-width 26 --logo-height 12 --chafa-symbols block --color-keys yellow --color-title yellow --structure Title:Separator:OS:Kernel:Uptime:Packages:Shell:WM:Terminal:Memory
+
+# --- 2. Prompt Customization (Dynamically Updated) ---
 # These variables will be updated by the flavor() function
 CURRENT_FG="yellow"
 CURRENT_BG="red"
 
-# Optional: Change the user context (the 'user@host' part)
-prompt_context() {
-  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
-    # Uses the dynamic flavor foreground
-    prompt_segment $CURRENT_FG white "%n@%m"
-  fi
-}
-
-source $ZSH/oh-my-zsh.sh
-
-# --- Terminal Greeting ---
-fastfetch
-
-# --- Prompt Customization ---
-# Redefine the dir segment to use dynamic background/foreground
 prompt_dir() {
   prompt_segment $CURRENT_FG $CURRENT_BG '%~'
 }
 
-# --- The Flavor Engine ---
+source $ZSH/oh-my-zsh.sh
+
+# --- 3. The Flavor Engine ---
 flavor() {
     local choice=$1
     local hex logo ff_color fg_color bg_color
@@ -152,18 +143,18 @@ flavor() {
     # 1. Update Niri Border Color
     sed -i "s/active-color \".*\"/active-color \"$hex\"/g" "$HOME/.config/niri/config.kdl"
     
-    # 2. Update Fastfetch
-    if [ -f "$HOME/.config/fastfetch/config.jsonc" ]; then
-        sed -i "s/\"source\": \".*\"/\"source\": \"~\/lemon-niri-installer\/$logo\"/g" "$HOME/.config/fastfetch/config.jsonc"
-        sed -i "s/\"color\": \".*\"/\"color\": \"$ff_color\"/g" "$HOME/.config/fastfetch/config.jsonc"
-    fi
+    # 2. Inject Fastfetch Logo & Colors into this .zshrc
+    # This targets the 'fastfetch --logo' line and swaps the image and color flags
+    sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$logo|g" "$HOME/.zshrc"
+    sed -i "s/--color-keys [a-z]*/--color-keys $ff_color/g" "$HOME/.zshrc"
+    sed -i "s/--color-title [a-z]*/--color-title $ff_color/g" "$HOME/.zshrc"
 
-    # 3. Update Zsh Prompt Colors (Self-modifying .zshrc)
+    # 3. Inject Zsh Prompt Colors into this .zshrc
     sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
     sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
     
-    # 4. Reload Niri
-    niri msg action reload-config && echo -e "Switched to \033[1m$choice\033[0m flavor!"
-    # Reload the current shell to apply prompt changes instantly
+    # 4. Reload Niri and Shell
+    niri msg action reload-config
+    echo -e "Switched to \033[1m$choice\033[0m flavor!"
     exec zsh
 }

@@ -279,23 +279,56 @@ if [[ $CHOICES == *"Wallpapers"* ]]; then
     [ ! -d "$WALLPAPER_DIR" ] && run_cmd git clone "$WALLPAPER_URL" "$WALLPAPER_DIR"
 fi
 
-# Symlinks & Theming
+#!/bin/bash
+# [All your radio_menu, check_menu, and dependency logic goes here...]
+
+# --- 6. Symlinks & Theming (The Final Step) ---
 if [[ $CHOICES == *"Symlinks"* ]]; then
     echo -e "${CYAN}Cloning & applying configurations...${NC}"
-    [ ! -d "$DOTFILES_DIR" ] && run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
+    
+    # Ensure the repo exists
+    if [ ! -d "$DOTFILES_DIR" ]; then
+        run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
+    fi
 
     if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
+        # 1. Inject Theme into Config Files
         echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor...${NC}"
-        sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" \
-            "$DOTFILES_DIR/niri/config.kdl"
-
+        sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$DOTFILES_DIR/niri/config.kdl"
+        
         if [ -f "$DOTFILES_DIR/fastfetch/config.jsonc" ]; then
-            sed -i "s/\"source\": \".*\"/\"source\": \"~\/lemon-niri-installer\/$LOGO\"/g" \
-                "$DOTFILES_DIR/fastfetch/config.jsonc"
+            sed -i "s/\"source\": \".*\"/\"source\": \"~\/lemon-niri-installer\/$logo\"/g" "$DOTFILES_DIR/fastfetch/config.jsonc"
         fi
+
+        # 2. Setup Directories
+        [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
+
+        # 3. Apply Zshrc
+        if [ -f "$DOTFILES_DIR/zshrc" ]; then
+            echo -e "${CYAN}Backing up and linking .zshrc...${NC}"
+            [ "$DRY_RUN" = false ] && [ -f "$HOME/.zshrc" ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
+            run_cmd ln -sf "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
+        fi
+
+        # 4. Apply Config Folders
+        for cfg in "niri" "alacritty" "fuzzel" "noctalia" "fastfetch"; do
+            if [ -d "$DOTFILES_DIR/$cfg" ]; then
+                echo -e "${CYAN}Linking $cfg config...${NC}"
+                [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
+                run_cmd ln -sf "$DOTFILES_DIR/$cfg" "$HOME/.config/"
+            fi
+        done
     fi
-    # ... rest of symlink logic
 fi
+
+# --- Final Check ---
+if systemd-detect-virt | grep -q "oracle"; then
+    echo -e "\n${YELLOW}VirtualBox detected. Ensure 3D Acceleration is ON.${NC}"
+fi
+
+echo -e "\n${GREEN}Installation complete!${NC}"
+echo -e "${CYAN}Flavor: ${YELLOW}$SELECTED_FLAVOR${NC}"
+echo -e "${DIM}Logout or reboot to see all changes take effect.${NC}"
 
 # --- Done ---
 echo -e "\n${GREEN}Installation complete!${NC}"
