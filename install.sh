@@ -267,7 +267,7 @@ if [[ $CHOICES == *"Noctalia"* ]]; then
             run_cmd sudo dnf install -y noctalia-shell
             ;;
         arch)
-            run_cmd $AUR_HELPER -S --needed --noconfirm noctalia-shell
+            run_cmd $AUR_HELPER -S --needed --noconfirm noctalia-shell bibata-cursor-theme-bin 
             ;;
         ubuntu|debian)
             echo -e "${RED}Warning: Noctalia may require manual build on Debian-based systems.${NC}"
@@ -280,7 +280,7 @@ if [[ $CHOICES == *"Tools"* ]]; then
     echo -e "${CYAN}Installing CLI tools...${NC}"
     case $OS in
         fedora)        run_cmd sudo dnf install -y alacritty fuzzel fastfetch chafa bibata-cursor-themes cmatrix ;;
-        arch)          run_cmd sudo pacman -S --needed --noconfirm alacritty fuzzel fastfetch chafa bibata-cursor-theme-bin cmatrix ;;
+        arch)          run_cmd sudo pacman -S --needed --noconfirm alacritty fuzzel fastfetch chafa cmatrix ;;
         ubuntu|debian) run_cmd sudo apt install -y alacritty fuzzel fastfetch chafa cmatrix ;;
     esac
 fi
