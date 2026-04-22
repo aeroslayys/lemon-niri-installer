@@ -1,6 +1,6 @@
 # 🍋 Lemon Niri Installer
 
-A citrus-themed Wayland desktop installer built around **Niri** — featuring proportional tiling, bold accent colors, and a fully interactive terminal UI.
+A citrus-themed Wayland desktop setup built around **Niri**, featuring proportional tiling, bold accent colors, and a dynamic flavor system.
 
 Minimal. Bright. Functional.
 
@@ -8,7 +8,7 @@ Minimal. Bright. Functional.
 
 # 🎨 Pick Your Flavor
 
-Choose your accent color during installation:
+Choose your accent color during installation — and switch anytime later.
 
 | Flavor | Color | Hex |
 |--------|-------|-----|
@@ -27,12 +27,12 @@ Choose your accent color during installation:
 
 ---
 
-# 🧠 What Makes This Installer Different
+# 🧠 Key Features
 
-✔ Fully interactive **custom TUI (no dependencies)**  
-✔ Keyboard-driven navigation (`j/k`, arrows, space, enter)  
-✔ Safe config replacement with automatic backups  
-✔ Theme injection based on selected flavor  
+✔ Interactive **TUI installer** (no dependencies)  
+✔ **Live theme engine** (`flavor` command)  
+✔ **Symlink-based dotfiles** (clean & maintainable)  
+✔ Safe config handling with automatic backups  
 ✔ Cross-distro support  
 ✔ `--dry-run` preview mode  
 
@@ -40,95 +40,118 @@ Choose your accent color during installation:
 
 # 🚀 Installation
 
-## 📦 Clone & Run (Recommended)
+## ⭐ Recommended: Manual Installation
+
+Manual install is strongly recommended so you:
+
+- Understand system changes  
+- Retain full control over configs  
+- Avoid unintended overwrites  
+- Learn your environment structure  
+
+---
+
+## 📦 Manual Steps
+
+### 1️⃣ Install Core Packages
+
+#### Fedora
+```bash
+sudo dnf install niri alacritty fastfetch chafa fuzzel git zsh cmatrix
+```
+
+#### Arch (requires AUR helper like `yay` or `paru`)
+```bash
+yay -S niri-git noctalia-shell bibata-cursor-theme-bin
+sudo pacman -S --needed alacritty fuzzel fastfetch chafa git zsh cmatrix
+```
+
+#### Debian / Ubuntu
+```bash
+sudo apt update
+sudo apt install alacritty fuzzel fastfetch chafa git zsh cmatrix cargo libwayland-dev libgbm-dev libinput-dev
+cargo install --locked niri
+```
+
+> ⚠ Noctalia and Bibata may require manual setup on Debian-based systems
+
+---
+
+### 2️⃣ Clone Dotfiles
 
 ```bash
 git clone https://github.com/aeroslayys/lemon-niri-installer ~/lemon-niri-installer
-cd ~/lemon-niri-installer
-
-chmod +x install.sh
-./install.sh
 ```
 
 ---
 
-## 🧪 Dry Run Mode (Safe Preview)
+### 3️⃣ Apply Configs (Symlinks)
 
 ```bash
-./install.sh --dry-run
+ln -sf ~/lemon-niri-installer/niri ~/.config/niri
+ln -sf ~/lemon-niri-installer/alacritty ~/.config/alacritty
+ln -sf ~/lemon-niri-installer/fastfetch ~/.config/fastfetch
+ln -sf ~/lemon-niri-installer/.zshrc ~/.zshrc
 ```
-
-Shows everything the installer *would* do without making changes.
 
 ---
 
-## 🌐 One-Line Install (Optional)
-
-Dry-run:
+### 4️⃣ Setup Zsh
 
 ```bash
-bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw/install.sh) --dry-run
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+git clone https://github.com/zsh-users/zsh-autosuggestions \
+  ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 ```
 
-Run:
+---
 
+### 5️⃣ Set Your Flavor
+
+The installer normally handles this automatically.
+---
+
+## ⚡ One-Line Install (Quick Setup)
+
+### ▶ Run Installer
 ```bash
 bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw/install.sh)
 ```
 
----
+### 🧪 Dry Run
+```bash
+bash <(curl -sSL https://gist.githubusercontent.com/aeroslayys/48301affed815e0ed09d492c48f3322a/raw/install.sh) --dry-run
+```
 
-# ⚙️ Supported Systems
-
-| Distro | Status |
-|--------|--------|
-| Fedora | ✅ Fully supported |
-| Arch Linux | ✅ Fully supported |
-| Ubuntu / Debian | ⚠ Experimental |
-
-### Notes
-- Debian/Ubuntu installs **Niri via Cargo**
-- Some components (like Noctalia) may require manual setup
+> ⚠ Always review scripts before piping to bash.
 
 ---
-## 🏔 Arch Linux & AUR Helpers
 
-The installer is designed to be **AUR-helper agnostic**.
+## ⚙️ Local Installer
 
-It will prioritize existing helpers such as:
+```bash
+chmod +x install.sh
+./install.sh
+```
 
-- `yay`
-- `paru`
-- `aurutils`
+Dry run:
 
-If none of these are detected, the installer will automatically install `yay` to complete the environment setup.
-
-This ensures a smooth experience while respecting existing Arch workflows.
+```bash
+chmod +x install.sh
+./install.sh --dry-run
+```
 
 ---
+
 # 🎮 Interactive Installer
 
-## 1️⃣ Flavor Selection
+Includes:
 
-Choose one:
-
-- 🍋 Lemon  
-- 🍈 Lime  
-- 🫐 Blue  
-
----
-
-## 2️⃣ Component Selection
-
-Toggle what you want:
-
-- Niri (Compositor)
-- Noctalia (Status Bar)
-- Bibata Cursor
-- Tools (Fuzzel, Alacritty, Fastfetch, Chafa)
-- Zsh + Oh My Zsh
-- Wallpapers (~1GB, optional)
-- Symlinks & Theming
+- Flavor selection (radio menu)
+- Component selection (checklist)
+- Safe symlink creation
+- Automatic backups
+- Theme injection
 
 ---
 
@@ -138,93 +161,100 @@ Toggle what you want:
 |-----|--------|
 | `j` / `↓` | Move down |
 | `k` / `↑` | Move up |
-| `SPACE` | Toggle selection |
+| `SPACE` | Toggle |
 | `ENTER` | Confirm |
-| `e` | Exit installer |
+| `e` | Exit |
+
+---
+
+## 🔄 What It Updates
+
+- Zsh prompt (Agnoster-based)
+- Niri border color
+- Fastfetch logo & colors
+
+✔ Applies instantly  
+✔ Persists across sessions  
+✔ Reloads Niri automatically when using `flavor`  
 
 ---
 
 # ⚙️ What the Installer Does
 
-## ✔ Distro Detection
+## ✔ Installs
 
-Uses `/etc/os-release`:
-
-- Fedora → `dnf`
-- Arch → `pacman` + AUR helper
-- Debian/Ubuntu → `apt` + Cargo
-
----
-
-## ✔ Automatic Bootstrapping
-
-Installs if missing:
-
-- `git`
-- `curl`
-- build tools (Debian-based)
+- Niri
+- Noctalia
+- Alacritty
+- Fuzzel
+- Fastfetch
+- Chafa
+- Bibata Cursor (Arch/Fedora)
+- Zsh + Oh My Zsh
+- zsh-autosuggestions
+- cmatrix
 
 ---
 
-## ✔ Smart Package Handling
+## ✔ Dotfile System
 
-### Niri
-- Fedora → COPR (`yalter/niri-git`)
-- Arch → `niri-git` (AUR)
-- Debian/Ubuntu → installed via `cargo`
+- Uses **symlinks (not copies)**
+- Keeps configs inside repo
+- Allows easy updates via:
 
-### Noctalia
-- Fedora → Terra repo
-- Arch → AUR
-- Debian → manual build warning
+```bash
+git pull
+```
 
 ---
 
-## ✔ Tools Installed
+## ✔ Safe Symlinking
 
-- `alacritty`
-- `fuzzel`
-- `fastfetch`
-- `chafa`
-- `bibata cursor`
+- Existing configs are backed up
+- Existing correct symlinks are preserved
+- No silent overwrites
 
----
-
-## ✔ Dotfiles & Config Management
-
-- Clones repo → `~/lemon-niri-installer`
-- Creates backup:
+Backups stored at:
 
 ```
 ~/dotfiles_backup_YYYYMMDD_HHMMSS
 ```
 
-- Replaces configs:
-  - `niri`
-  - `alacritty`
-  - `fastfetch` *(stored as `fasfetch` in repo)*
+---
 
-- Replaces `.zshrc` if selected
+## ✔ Theme Injection (Important)
+
+Theme changes are written directly to:
+
+```
+~/lemon-niri-installer/
+```
+
+Because configs are symlinked:
+
+✔ Changes apply instantly  
+✔ No need to recreate links  
 
 ---
 
-## 🎨 Theme Injection
+## ✔ Fastfetch Behavior
 
-Automatically updates based on selected flavor:
+Fastfetch uses logos from:
 
-- Zsh prompt colors  
-- Fastfetch logo & colors  
-- Niri active border color  
+```
+~/lemon-niri-installer/
+```
 
-No manual editing required.
+Do not move the repo unless you update paths.
 
 ---
 
-## 🖼 Wallpaper Pack (Optional)
+# 🖼 Wallpaper Pack (Optional)
 
 - Source: JaKooLit Wallpaper Bank  
 - Size: ~1GB  
-- Installed to:
+
+Installed to:
 
 ```
 ~/Pictures/Wallpaper-Bank
@@ -232,9 +262,9 @@ No manual editing required.
 
 ---
 
-## 🧊 Virtual Machine Detection
+# 🧊 Virtual Machine Support
 
-If running in VirtualBox, installer suggests:
+If running in VirtualBox:
 
 ### Fedora
 ```bash
@@ -250,68 +280,62 @@ sudo pacman -S virtualbox-guest-utils
 
 # 🛠 Components Overview
 
-| Category      | Tool              |
-|--------------|-------------------|
-| Compositor   | Niri              |
-| Terminal     | Alacritty         |
-| Status Bar   | Noctalia          |
-| Launcher     | Fuzzel            |
-| System Info  | Fastfetch         |
-| ASCII Render | Chafa             |
-| Shell        | Zsh               |
-| Cursor       | Bibata Modern Ice |
+| Category      | Tool |
+|--------------|------|
+| Compositor   | Niri |
+| Terminal     | Alacritty |
+| Bar          | Noctalia |
+| Launcher     | Fuzzel |
+| System Info  | Fastfetch |
+| ASCII        | Chafa |
+| Shell        | Zsh + OMZ |
+| Plugin       | zsh-autosuggestions |
+| Cursor       | Bibata |
+| Fun          | cmatrix |
 
 ---
 
 # ⚡ Key Specs
 
 - **Layout:** Proportional tiling  
-- **Default Ratio:** 0.5 column width  
-- **Theme:** Citrus + Gruvbox-inspired contrast  
-- **Bar:** Noctalia (GTK4)  
-- **Installer:** Interactive TUI  
+- **Default Ratio:** 0.5  
+- **Theme Engine:** Dynamic (flavor-based)  
+- **Config System:** Symlink-based  
 
 ---
 
 # 🍋 Philosophy
 
-A clean, high-contrast Wayland setup focused on:
+A fast, clean Wayland setup focused on:
 
-- Speed  
-- Clarity  
-- Minimalism  
-- Visual identity  
+- Simplicity  
+- Visual clarity  
+- Live customization  
 
 ---
 
-# ⚠️ Important Notes
+# ⚠️ Notes
 
-- Always review with `--dry-run`
-- Debian-based support is experimental
-- Existing configs will be backed up but replaced
+- Use `--dry-run` before installing  
+- Debian support is experimental  
+- Configs are symlinked and managed centrally  
 
 ---
 
 # 🤝 Contributors & Credits
 
-### Core Contributors
+### Core
 
-- **[@aeroslayys](https://github.com/aeroslayys)** — Creator, maintainer, and primary developer  
+- **[@aeroslayys](https://github.com/aeroslayys)** — Creator & Developer  
 
 ---
 
 ### Special Thanks
 
-- **[Niri](https://github.com/niri-wm/niri)** — Wayland compositor  
-- **[Noctalia](https://noctalia.dev/)** — GTK4 shell & bar  
-- **[JaKooLit](https://github.com/JaKooLit)** — Wallpaper bank inspiration  
-- **[Bibata Cursor](https://github.com/ful1e5/bibata)** — Cursor theme  
-
----
-
-### Community
-
-- Fedora & Arch Linux communities for ecosystem support  
+- **[Niri](https://github.com/niri-wm/niri)**  
+- **[Noctalia](https://noctalia.dev/)**  
+- **[JaKooLit](https://github.com/JaKooLit)**  
+- **[Bibata Cursor](https://github.com/ful1e5/bibata)**  
 
 ---
 

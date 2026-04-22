@@ -6,6 +6,7 @@ WALLPAPER_URL="https://github.com/JaKooLit/Wallpaper-Bank"
 DOTFILES_DIR="$HOME/lemon-niri-installer"
 WALLPAPER_DIR="$HOME/Pictures/Wallpaper-Bank"
 BACKUP_DIR="$HOME/dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+FLAVOR_FILE="$HOME/.config/lemon-niri/flavor"
 
 # Colors
 CYAN='\033[0;36m'
@@ -23,7 +24,7 @@ DRY_RUN=false
 
 run_cmd() {
     if [ "$DRY_RUN" = true ]; then
-        echo -e "${MAGENTA}[DRY-RUN] Executing:${NC} $@"
+        echo -e "${MAGENTA}[DRY-RUN] Executing:${NC} $*"
     else
         "$@"
     fi
@@ -40,14 +41,13 @@ fi
 
 # ─────────────────────────────────────────────
 # RADIO MENU  (single select, j/k or arrows)
-# Usage: radio_menu "Title" "Subtitle" ITEMS_ARRAY
-# Sets global: RADIO_RESULT (the chosen tag)
+# Sets global: RADIO_RESULT
 # ─────────────────────────────────────────────
 radio_menu() {
     local title="$1"
     local subtitle="$2"
     shift 2
-    local items=("$@")   # flat: tag desc tag desc ...
+    local items=("$@")
     local count=$(( ${#items[@]} / 2 ))
     local cursor=0
 
@@ -68,7 +68,6 @@ radio_menu() {
         echo
         echo -e "${DIM}  [j/k or ↑↓] Move   [ENTER] Confirm   [e] Exit${NC}"
 
-        # Read a single keypress (handles arrow keys which are 3-byte sequences)
         IFS= read -rsn1 key </dev/tty
         if [[ "$key" == $'\x1b' ]]; then
             read -rsn2 -t 0.1 key2 </dev/tty
@@ -76,13 +75,9 @@ radio_menu() {
         fi
 
         case "$key" in
-            'k'|$'\x1b[A')  # up
-                (( cursor > 0 )) && (( cursor-- ))
-                ;;
-            'j'|$'\x1b[B')  # down
-                (( cursor < count-1 )) && (( cursor++ ))
-                ;;
-            '')  # enter
+            'k'|$'\x1b[A') (( cursor > 0 )) && (( cursor-- )) ;;
+            'j'|$'\x1b[B') (( cursor < count-1 )) && (( cursor++ )) ;;
+            '')
                 RADIO_RESULT="${items[$((cursor*2))]}"
                 return 0
                 ;;
@@ -95,27 +90,20 @@ radio_menu() {
 }
 
 # ─────────────────────────────────────────────
-# CHECKLIST MENU  (multi select, j/k or arrows, space to toggle)
-# Usage: check_menu "Title" "Subtitle" ITEMS_ARRAY
-# Items flat: tag desc default(ON/OFF) tag desc default ...
-# Sets global: CHECK_RESULT (space-separated selected tags)
+# CHECKLIST MENU  (multi select, space to toggle)
+# Sets global: CHECK_RESULT
 # ─────────────────────────────────────────────
 check_menu() {
     local title="$1"
     local subtitle="$2"
     shift 2
-    local items=("$@")   # flat: tag desc ON/OFF ...
+    local items=("$@")
     local count=$(( ${#items[@]} / 3 ))
     local cursor=0
     local selected=()
 
-    # Initialise selected state from defaults
     for (( i=0; i<count; i++ )); do
-        if [[ "${items[$((i*3+2))]}" == "ON" ]]; then
-            selected[$i]=1
-        else
-            selected[$i]=0
-        fi
+        [[ "${items[$((i*3+2))]}" == "ON" ]] && selected[$i]=1 || selected[$i]=0
     done
 
     while true; do
@@ -145,27 +133,17 @@ check_menu() {
         fi
 
         case "$key" in
-            'k'|$'\x1b[A')  # up
-                (( cursor > 0 )) && (( cursor-- ))
+            'k'|$'\x1b[A') (( cursor > 0 )) && (( cursor-- )) ;;
+            'j'|$'\x1b[B') (( cursor < count-1 )) && (( cursor++ )) ;;
+            ' ')
+                [[ "${selected[$cursor]}" -eq 1 ]] && selected[$cursor]=0 || selected[$cursor]=1
                 ;;
-            'j'|$'\x1b[B')  # down
-                (( cursor < count-1 )) && (( cursor++ ))
-                ;;
-            ' ')  # space — toggle
-                if [[ "${selected[$cursor]}" -eq 1 ]]; then
-                    selected[$cursor]=0
-                else
-                    selected[$cursor]=1
-                fi
-                ;;
-            '')  # enter — confirm
+            '')
                 CHECK_RESULT=""
                 for (( i=0; i<count; i++ )); do
-                    if [[ "${selected[$i]}" -eq 1 ]]; then
-                        CHECK_RESULT+="${items[$((i*3))]} "
-                    fi
+                    [[ "${selected[$i]}" -eq 1 ]] && CHECK_RESULT+="${items[$((i*3))]} "
                 done
-                CHECK_RESULT="${CHECK_RESULT% }"  # trim trailing space
+                CHECK_RESULT="${CHECK_RESULT% }"
                 return 0
                 ;;
             'e'|'E')
@@ -176,7 +154,44 @@ check_menu() {
     done
 }
 
-# --- 2. Ensure deps ---
+# ─────────────────────────────────────────────
+# SYMLINK HELPER
+# Creates a symlink, backing up any existing file/dir first
+# Usage: make_link <source> <target>
+# ─────────────────────────────────────────────
+make_link() {
+    local src="$1"
+    local dst="$2"
+
+    # Source must exist
+    if [ ! -e "$src" ]; then
+        echo -e "${YELLOW}  Skipping $dst — source not found: $src${NC}"
+        return
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${MAGENTA}[DRY-RUN] ln -sf $src → $dst${NC}"
+        return
+    fi
+
+    # Backup if something already exists at destination (and isn't already our symlink)
+    if [ -e "$dst" ] || [ -L "$dst" ]; then
+        if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+            echo -e "${DIM}  Already linked: $dst${NC}"
+            return
+        fi
+        mkdir -p "$BACKUP_DIR"
+        mv "$dst" "$BACKUP_DIR/$(basename "$dst").bak"
+        echo -e "${DIM}  Backed up existing $(basename "$dst")${NC}"
+    fi
+
+    # Ensure parent dir exists
+    mkdir -p "$(dirname "$dst")"
+    ln -sf "$src" "$dst"
+    echo -e "${GREEN}  ✓ Linked: $dst → $src${NC}"
+}
+
+# --- 2. Ensure base deps ---
 if ! command -v git &>/dev/null || ! command -v curl &>/dev/null; then
     echo -e "${CYAN}Bootstrapping requirements for $OS...${NC}"
     case $OS in
@@ -199,9 +214,9 @@ clear
 echo -e "${CYAN}Flavor selected: ${YELLOW}$FLAVOR${NC}"
 
 case "$FLAVOR" in
-    Lemon) ACTIVE_HEX="#FFED29"; LOGO="lemon.png";      SELECTED_FLAVOR="Lemon" ;;
-    Lime)  ACTIVE_HEX="#32CD32"; LOGO="green1.png";     SELECTED_FLAVOR="Lime"  ;;
-    Blue)  ACTIVE_HEX="#00B4D8"; LOGO="blue-lemon.png"; SELECTED_FLAVOR="Blue"  ;;
+    Lemon) ACTIVE_HEX="#FFED29"; LOGO="lemon.png";      FF_COLOR="yellow"; FG="white"; BG="yellow"; SELECTED_FLAVOR="Lemon" ;;
+    Lime)  ACTIVE_HEX="#32CD32"; LOGO="green1.png";     FF_COLOR="green";  FG="white"; BG="green";  SELECTED_FLAVOR="Lime"  ;;
+    Blue)  ACTIVE_HEX="#00B4D8"; LOGO="blue-lemon.png"; FF_COLOR="blue";   FG="white"; BG="blue";   SELECTED_FLAVOR="Blue"  ;;
 esac
 
 # --- 4. Component Selection ---
@@ -219,10 +234,11 @@ check_menu \
 CHOICES="$CHECK_RESULT"
 clear
 
-# --- 5. Installation ---
+# --- 5. Package Installation ---
 
 # Niri
 if [[ $CHOICES == *"Niri"* ]]; then
+    echo -e "${CYAN}Installing Niri...${NC}"
     case $OS in
         fedora)
             run_cmd sudo dnf copr enable -y yalter/niri-git
@@ -242,6 +258,7 @@ fi
 
 # Noctalia
 if [[ $CHOICES == *"Noctalia"* ]]; then
+    echo -e "${CYAN}Installing Noctalia...${NC}"
     case $OS in
         fedora)
             run_cmd sudo dnf install -y --nogpgcheck \
@@ -249,119 +266,120 @@ if [[ $CHOICES == *"Noctalia"* ]]; then
                 terra-release
             run_cmd sudo dnf install -y noctalia-shell
             ;;
-        arch)  run_cmd $AUR_HELPER -S --needed --noconfirm noctalia-shell ;;
-        ubuntu|debian) echo -e "${RED}Warning: Noctalia may require manual build on Debian-based systems.${NC}" ;;
+        arch)
+            run_cmd $AUR_HELPER -S --needed --noconfirm noctalia-shell
+            ;;
+        ubuntu|debian)
+            echo -e "${RED}Warning: Noctalia may require manual build on Debian-based systems.${NC}"
+            ;;
     esac
 fi
 
 # Tools
 if [[ $CHOICES == *"Tools"* ]]; then
+    echo -e "${CYAN}Installing CLI tools...${NC}"
     case $OS in
-        fedora)        run_cmd sudo dnf install -y alacritty fuzzel fastfetch chafa bibata-cursor-themes ;;
-        arch)          run_cmd sudo pacman -S --needed --noconfirm alacritty fuzzel fastfetch chafa bibata-cursor-theme-bin ;;
-        ubuntu|debian) run_cmd sudo apt install -y alacritty fuzzel fastfetch chafa ;;
+        fedora)        run_cmd sudo dnf install -y alacritty fuzzel fastfetch chafa bibata-cursor-themes cmatrix ;;
+        arch)          run_cmd sudo pacman -S --needed --noconfirm alacritty fuzzel fastfetch chafa bibata-cursor-theme-bin cmatrix ;;
+        ubuntu|debian) run_cmd sudo apt install -y alacritty fuzzel fastfetch chafa cmatrix ;;
     esac
 fi
 
-# Zsh
+# Zsh + Oh My Zsh
 if [[ $CHOICES == *"Zsh"* ]]; then
+    echo -e "${CYAN}Installing Zsh...${NC}"
     case $OS in
         fedora)        run_cmd sudo dnf install -y zsh ;;
         arch)          run_cmd sudo pacman -S --needed --noconfirm zsh ;;
         ubuntu|debian) run_cmd sudo apt install -y zsh ;;
     esac
-    # ... rest of zsh logic
+
+    if [ "$DRY_RUN" = false ] && [ ! -d "$HOME/.oh-my-zsh" ]; then
+        echo -e "${CYAN}Installing Oh My Zsh...${NC}"
+        RUNZSH=no CHSH=no sh -c \
+            "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
+
+    if [ "$DRY_RUN" = false ] && [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
+        echo -e "${CYAN}Installing zsh-autosuggestions plugin...${NC}"
+        git clone https://github.com/zsh-users/zsh-autosuggestions \
+            "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+    fi
 fi
 
 # Wallpapers
 if [[ $CHOICES == *"Wallpapers"* ]]; then
-    echo -e "${CYAN}Cloning wallpaper bank...${NC}"
+    echo -e "${CYAN}Cloning wallpaper bank (~1GB)...${NC}"
     [ ! -d "$WALLPAPER_DIR" ] && run_cmd git clone "$WALLPAPER_URL" "$WALLPAPER_DIR"
 fi
 
-# --- 6. Configuration & Theming (The Final Step) ---
+# --- 6. Symlinks & Theming ---
 if [[ $CHOICES == *"Symlinks"* ]]; then
-    echo -e "${CYAN}Cloning & applying configurations...${NC}"
-    
-    # --- RESTORED CLONE LOGIC ---
+    echo -e "\n${CYAN}Setting up dotfiles...${NC}"
+
+    # Clone or update repo
     if [ ! -d "$DOTFILES_DIR" ]; then
-        echo -e "${CYAN}Cloning repository to $DOTFILES_DIR...${NC}"
+        echo -e "${CYAN}Cloning dotfiles to $DOTFILES_DIR...${NC}"
         run_cmd git clone "$REPO_URL" "$DOTFILES_DIR"
     else
-        echo -e "${YELLOW}Repo already exists, pulling latest changes...${NC}"
+        echo -e "${YELLOW}Repo already exists — pulling latest changes...${NC}"
         run_cmd git -C "$DOTFILES_DIR" pull
     fi
 
-    # Ensure the directory actually exists before proceeding
-    if [ "$DRY_RUN" = false ] || [ -d "$DOTFILES_DIR" ]; then
-        
-        # 1. Setup Directories
-        [ "$DRY_RUN" = false ] && mkdir -p "$HOME/.config" "$BACKUP_DIR"
+    if [ "$DRY_RUN" = true ] || [ -d "$DOTFILES_DIR" ]; then
+        echo -e "\n${CYAN}Creating symlinks...${NC}"
 
-        # 2. Replace Config Folders (niri, alacritty, and the 'fasfetch' typo folder)
-        for cfg in "niri" "alacritty" "fasfetch"; do
-            if [ -d "$DOTFILES_DIR/$cfg" ]; then
-                echo -e "${GREEN}Replacing $cfg config...${NC}"
-                # Backup if exists
-                if [ -d "$HOME/.config/$cfg" ]; then
-                    [ "$DRY_RUN" = false ] && cp -r "$HOME/.config/$cfg" "$BACKUP_DIR/${cfg}_bak"
-                    [ "$DRY_RUN" = false ] && rm -rf "$HOME/.config/$cfg"
-                fi
-                run_cmd cp -r "$DOTFILES_DIR/$cfg" "$HOME/.config/"
-            fi
+        # Config directories — each becomes a symlink inside ~/.config/
+        for cfg in niri alacritty fastfetch; do
+            make_link "$DOTFILES_DIR/$cfg" "$HOME/.config/$cfg"
         done
 
-        # 3. Handle .zshrc Replacement
-        if [ -f "$DOTFILES_DIR/.zshrc" ]; then
-            echo -e "${GREEN}Replacing .zshrc...${NC}"
-            if [ -f "$HOME/.zshrc" ]; then
-                [ "$DRY_RUN" = false ] && mv "$HOME/.zshrc" "$BACKUP_DIR/.zshrc.bak"
-            fi
-            run_cmd cp "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-        fi
+        # .zshrc symlink at home
+        make_link "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 
-        # --- 4. THEME INJECTION (The Fuzzy Fix) ---
-        case $SELECTED_FLAVOR in
-            Lemon) FG="yellow"; BG="red";   HEX="#FFED29"; LOGO="lemon.png" ;;
-            Lime)  FG="green";  BG="black";  HEX="#32CD32"; LOGO="green1.png" ;;
-            Blue)  FG="blue";   BG="white";  HEX="#00B4D8"; LOGO="blue-lemon.png" ;;
-        esac
-
+        # --- Flavor injection into the LIVE symlinked configs ---
+        # We write directly to the source files in DOTFILES_DIR so the
+        # symlinks pick up changes instantly without re-linking
         if [ "$DRY_RUN" = false ]; then
-            echo -e "${CYAN}Injecting $SELECTED_FLAVOR flavor...${NC}"
+            echo -e "\n${CYAN}Injecting ${YELLOW}$SELECTED_FLAVOR${CYAN} flavor...${NC}"
 
-            # A. Update Zsh Prompt
-            [ -f "$HOME/.zshrc" ] && sed -i "s/CURRENT_FG=\".*\"/CURRENT_FG=\"$FG\"/g" "$HOME/.zshrc"
-            [ -f "$HOME/.zshrc" ] && sed -i "s/CURRENT_BG=\".*\"/CURRENT_BG=\"$BG\"/g" "$HOME/.zshrc"
+            # Save flavor for shell persistence
+            mkdir -p "$(dirname "$FLAVOR_FILE")"
+            echo "${SELECTED_FLAVOR,,}" > "$FLAVOR_FILE"
 
-            # B. Update Fastfetch JSON Config
-            JSON_CONF="$HOME/.config/fasfetch/config.jsonc"
-            if [ -f "$JSON_CONF" ]; then
-                echo -e "${DIM}Updating JSON at $JSON_CONF${NC}"
-                # Update logo source with fuzzy match
-                sed -i "s|\"source\":[[:space:]]*\".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$JSON_CONF"
-                # Update keys and title colors
-                sed -i "s/\"keys\":[[:space:]]*\".*\"/\"keys\": \"$FG\"/g" "$JSON_CONF"
-                sed -i "s/\"title\":[[:space:]]*\".*\"/\"title\": \"$FG\"/g" "$JSON_CONF"
-            fi
-
-            # C. Update Niri
-            NIRI_CONF="$HOME/.config/niri/config.kdl"
+            # A. Niri border color
+            NIRI_CONF="$DOTFILES_DIR/niri/config.kdl"
             if [ -f "$NIRI_CONF" ]; then
-                sed -i "s/active-color \".*\"/active-color \"$HEX\"/g" "$NIRI_CONF"
+                sed -i "s/active-color \".*\"/active-color \"$ACTIVE_HEX\"/g" "$NIRI_CONF"
+                echo -e "${GREEN}  ✓ Niri color set to $ACTIVE_HEX${NC}"
             fi
+
+            # B. Fastfetch logo + colors (fixed dir name)
+            FF_CONF="$DOTFILES_DIR/fastfetch/config.jsonc"
+            if [ -f "$FF_CONF" ]; then
+                sed -i "s|\"source\":[[:space:]]*\".*\"|\"source\": \"~/lemon-niri-installer/$LOGO\"|g" "$FF_CONF"
+                sed -i "s/\"keys\":[[:space:]]*\".*\"/\"keys\": \"$FF_COLOR\"/g"                        "$FF_CONF"
+                sed -i "s/\"title\":[[:space:]]*\".*\"/\"title\": \"$FF_COLOR\"/g"                      "$FF_CONF"
+                echo -e "${GREEN}  ✓ Fastfetch logo and colors updated${NC}"
+            fi
+
+            # C. Zsh prompt colors — written to the flavor persistence file
+            # The .zshrc reads $FLAVOR_FILE at startup, so no sed on .zshrc needed
+            echo -e "${GREEN}  ✓ Flavor '$SELECTED_FLAVOR' saved — prompt colors will apply on next shell${NC}"
         fi
     fi
 fi
-# --- Final Check ---
-if systemd-detect-virt | grep -q "oracle"; then
-    echo -e "\n${YELLOW}VirtualBox detected. Ensure 3D Acceleration is ON.${NC}"
+
+# --- 7. VirtualBox Warning ---
+if command -v systemd-detect-virt &>/dev/null && systemd-detect-virt | grep -q "oracle"; then
+    echo -e "\n${YELLOW}⚠ VirtualBox detected. Make sure 3D Acceleration is enabled in VM settings.${NC}"
+    case $OS in
+        fedora) echo -e "  Run: ${DIM}sudo dnf install virtualbox-guest-additions${NC}" ;;
+        arch)   echo -e "  Run: ${DIM}sudo pacman -S virtualbox-guest-utils${NC}" ;;
+    esac
 fi
 
-echo -e "\n${GREEN}Installation complete!${NC}"
-echo -e "${CYAN}Flavor: ${YELLOW}$SELECTED_FLAVOR${NC}"
-echo -e "${DIM}Logout or reboot to see all changes take effect.${NC}"
-
 # --- Done ---
-echo -e "\n${GREEN}Installation complete!${NC}"
-echo -e "${CYAN}Selected Flavor: ${YELLOW}$SELECTED_FLAVOR${NC}"
+echo -e "\n${GREEN}✓ Installation complete!${NC}"
+echo -e "${CYAN}Flavor:  ${YELLOW}$SELECTED_FLAVOR${NC}"
+echo -e "${DIM}Log out or reboot to see all changes take effect.${NC}"

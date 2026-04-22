@@ -1,178 +1,135 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
-# Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 ZSH_THEME="agnoster"
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
-
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
-
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
-
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
-
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
 plugins=(git zsh-autosuggestions)
 
-# Change the prompt background to Red
-#AGNOSTER_PROMPT_SEGMENTS_COLOR=yellow
+# ─────────────────────────────────────────────
+# FLAVOR PERSISTENCE
+# The installer writes the chosen flavor to this file.
+# The flavor() function updates it live.
+# ─────────────────────────────────────────────
+FLAVOR_FILE="$HOME/.config/lemon-niri/flavor"
+CURRENT_FLAVOR="lemon"
+[ -f "$FLAVOR_FILE" ] && CURRENT_FLAVOR=$(cat "$FLAVOR_FILE")
 
-
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-# Color 1 is usually the 'f', Color 2 is the surrounding shape
-clear
-echo ""
-# --- 1. Terminal Greeting (Dynamically Updated) ---
-# The flavor() function will overwrite this line specifically
-# --- Terminal Greeting ---
-fastfetch --config ~/.config/fasfetch/config.jsonc
-# --- 2. Prompt Customization (Dynamically Updated) ---
-# These variables will be updated by the flavor() function
-export CURRENT_FG="white"
-export CURRENT_BG="blue"
-
-# --- 2. Override Agnoster Segments ---
-# This fixes the "Background is always Blue" issue
-prompt_context() {
-  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
-    # Use YOUR variables here instead of hardcoded colors
-    prompt_segment $CURRENT_BG $CURRENT_FG "%(!.%{%F{yellow}%}.)$USER@%m"
-  fi
+# Map flavor name → prompt BG and FG colors
+_flavor_prompt_colors() {
+    case "$1" in
+        lemon) echo "yellow white" ;;
+        lime)  echo "green  white" ;;
+        blue)  echo "blue   white" ;;
+        *)     echo "yellow white" ;;
+    esac
 }
 
-prompt_git() {
-  local ref
-  if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-    ZSH_THEME_GIT_PROMPT_CLEAN=""
-    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev HEAD | head -n1)"
-    # This fixes the Git segment background
-    prompt_segment $CURRENT_BG $CURRENT_FG "${ref#refs/heads/} $(git_prompt_status)"
-  fi
+# Redefine agnoster segments using current flavor colors.
+# Called once at startup and again live inside flavor().
+_apply_prompt_colors() {
+    local colors
+    colors=($(_flavor_prompt_colors "$1"))
+    local bg="${colors[1]}"
+    local fg="${colors[2]}"
+
+    prompt_context() {
+        if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+            prompt_segment $bg $fg "%(!.%{%F{red}%}.)$USER@%m"
+        fi
+    }
+
+    prompt_dir() {
+        prompt_segment $bg $fg '%~'
+    }
+
+    prompt_git() {
+        local ref dirty
+        if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+            dirty=$(git_prompt_status)
+            ref=$(git symbolic-ref HEAD 2>/dev/null) \
+                || ref="➦ $(git show-ref --head -s --abbrev HEAD | head -n1)"
+            prompt_segment $bg $fg "${ref#refs/heads/}${dirty:+ $dirty}"
+        fi
+    }
 }
 
-prompt_dir() {
-  prompt_segment $CURRENT_FG $CURRENT_BG '%~'
-}
+# Apply on shell start before sourcing OMZ so segments are ready
+_apply_prompt_colors "$CURRENT_FLAVOR"
 
 source $ZSH/oh-my-zsh.sh
 
-# --- 3. The Flavor Engine ---
+# ─────────────────────────────────────────────
+# THE FLAVOR ENGINE
+# Usage: flavor [lemon|lime|blue]
+# Updates: prompt colors, Niri border, fastfetch logo/colors
+# Everything persists across sessions via $FLAVOR_FILE
+# ─────────────────────────────────────────────
 flavor() {
-    local choice=$1
-    local hex logo ff_color fg_color bg_color
-    case $choice in
-        lemon) 
-            hex="#FFED29"; logo="lemon.png"; ff_color="yellow"
-            fg_color="white"; bg_color="yellow" ;;
-        lime)  
-            hex="#32CD32"; logo="green1.png"; ff_color="green"
-            fg_color="white"; bg_color="green" ;;
-        blue)  
-            hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"
-            fg_color="white"; bg_color="blue" ;;
-        *) echo "Usage: flavor [lemon|lime|blue]"; return 1 ;;
+    local choice="$1"
+    local hex logo ff_color
+
+    case "$choice" in
+        lemon) hex="#FFED29"; logo="lemon.png";      ff_color="yellow" ;;
+        lime)  hex="#32CD32"; logo="green1.png";     ff_color="green"  ;;
+        blue)  hex="#00B4D8"; logo="blue-lemon.png"; ff_color="blue"   ;;
+        *)
+            echo "Usage: flavor [lemon|lime|blue]"
+            echo ""
+            echo "  lemon  🍋  Yellow  #FFED29"
+            echo "  lime   🍈  Green   #32CD32"
+            echo "  blue   🫐  Blue    #00B4D8"
+            return 1
+            ;;
     esac
 
-    # 1. Update Niri Border Color
-    sed -i "s/active-color \".*\"/active-color \"$hex\"/g" "$HOME/.config/niri/config.kdl"
-    
-    # 2. Inject Fastfetch Logo & Colors into this .zshrc
-    # This targets the 'fastfetch --logo' line and swaps the image and color flags
-    sed -i "s|--logo .*/.*.png|--logo ~/lemon-niri-installer/$logo|g" "$HOME/.zshrc"
-    sed -i "s/--color-keys [a-z]*/--color-keys $ff_color/g" "$HOME/.zshrc"
-    sed -i "s/--color-title [a-z]*/--color-title $ff_color/g" "$HOME/.zshrc"
+    # 1. Persist the choice — startup will read this next time
+    mkdir -p "$(dirname "$FLAVOR_FILE")"
+    echo "$choice" > "$FLAVOR_FILE"
+    CURRENT_FLAVOR="$choice"
 
-    # 3. Inject Zsh Prompt Colors into this .zshrc
-    sed -i "s/export CURRENT_FG=\".*\"/export CURRENT_FG=\"$fg_color\"/g" "$HOME/.zshrc"
-    sed -i "s/export CURRENT_BG=\".*\"/export CURRENT_BG=\"$bg_color\"/g" "$HOME/.zshrc"
-    # 4. Reload Niri and Shell
-    niri msg action reload-config
-    echo -e "Switched to \033[1m$choice\033[0m flavor!"
-    exec zsh
+    # 2. Apply agnoster prompt colors immediately in this shell
+    _apply_prompt_colors "$choice"
+
+    # 3. Update Niri border color
+    local niri_cfg="$HOME/.config/niri/config.kdl"
+    if [ -f "$niri_cfg" ]; then
+        sed -i "s/active-color \".*\"/active-color \"$hex\"/g" "$niri_cfg"
+    fi
+
+    # 4. Update fastfetch logo + colors in the config
+    local ff_cfg="$HOME/.config/fastfetch/config.jsonc"
+    if [ -f "$ff_cfg" ]; then
+        sed -i "s|\"source\":[[:space:]]*\".*\"|\"source\": \"~/lemon-niri-installer/$logo\"|g" "$ff_cfg"
+        sed -i "s/\"keys\":[[:space:]]*\".*\"/\"keys\": \"$ff_color\"/g"                        "$ff_cfg"
+        sed -i "s/\"title\":[[:space:]]*\".*\"/\"title\": \"$ff_color\"/g"                      "$ff_cfg"
+    fi
+
+    # 5. Reload Niri config
+    if command -v niri &>/dev/null; then
+        niri msg action reload-config 2>/dev/null && echo -e "✓ Niri reloaded"
+    fi
+
+    echo -e "Switched to \033[1m$choice\033[0m flavor 🍋"
+    echo -e "\033[2mOpen a new terminal to see fastfetch changes.\033[0m"
 }
+
+# ─────────────────────────────────────────────
+# USER CONFIGURATION
+# ─────────────────────────────────────────────
+
+# export MANPATH="/usr/local/man:$MANPATH"
+# export LANG=en_US.UTF-8
+# export EDITOR='nvim'
+# export ARCHFLAGS="-arch $(uname -m)"
+
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# ─────────────────────────────────────────────
+# TERMINAL GREETING
+# ─────────────────────────────────────────────
+clear
+echo ""
+fastfetch --config ~/.config/fastfetch/config.jsonc
